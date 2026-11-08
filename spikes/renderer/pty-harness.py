@@ -82,7 +82,7 @@ class Terminal:
             import fcntl
             import struct
             import termios
-            fcntl.ioctl(self.fd if hasattr(self, "fd") else 0, termios.TIOCSWINSZ, struct.pack("HHHH", 30, columns, 0, 0))
+            fcntl.ioctl(self.fd if self.fd >= 0 else 0, termios.TIOCSWINSZ, struct.pack("HHHH", 30, columns, 0, 0))
 
     def close(self):
         if os.name == "nt":
@@ -158,7 +158,8 @@ def session(args, root, directory, backend, mode, control, failure=False):
     Path(str(prefix) + ".pty.log").write_text(output, encoding="utf-8")
     terminal_data = json.loads(terminal_result.read_text()) if finished else {"timeout": True}
     metrics = None
-    for line in Path(config["stderr"]).read_text(encoding="utf-8", errors="replace").splitlines():
+    stderr = Path(config["stderr"])
+    for line in (stderr.read_text(encoding="utf-8", errors="replace") if stderr.exists() else "").splitlines():
         if line.startswith('{"kind":'):
             metrics = json.loads(line)
     success = validate(metrics, terminal_data, control) and controls_restored(output)
@@ -183,6 +184,17 @@ def self_test():
     assert controls_restored("\x1b[?25l\x1b[?25h\x1b[>7u\x1b[<u\x1b[>4;2m\x1b[>4;0m")
     assert not controls_restored("\x1b[?25l")
     assert not controls_restored("\x1b[>7u")
+    from types import SimpleNamespace
+    from unittest.mock import patch
+    calls = []
+    fake_modules = {"fcntl": SimpleNamespace(ioctl=lambda fd, *args: calls.append(fd)),
+                    "termios": SimpleNamespace(TIOCSWINSZ=0)}
+    with patch.object(os, "name", "posix"), patch.dict(sys.modules, fake_modules):
+        terminal = Terminal.__new__(Terminal)
+        for fd in (-1, 5):
+            terminal.fd = fd
+            terminal.resize(120)
+    assert calls == [0, 5], "fork child resizes stdin; parent resizes the master"
 
 
 def main():
