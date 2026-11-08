@@ -58,6 +58,17 @@ agent has loaded configuration and resolved its shell. It is neither peak RSS
 nor TUI latency. Raw samples remain in the baseline; outliers are not discarded.
 Routine gates run `agent-f00-v1` in an empty home and working directory.
 
+Following the bounded same-job collection, T09 also proposes four additional
+complete hardware pairs, bringing the baseline to 16 entries. All initial rows
+and caps above are preserved exactly. The additional rows use source, native
+build inputs and installed dependencies proven equivalent to the measured T08
+application; the [append-only coverage proposal](../perf/measurement.md#append-only-coverage-proposal)
+records their values and provenance. New agent caps remain 97784794 bytes on
+Linux and 103514727 on Windows. A separate unapproved candidate file and semantic
+diff precede the explicit PR edit. Finite observed coverage does not establish
+stable hosted hardware; unknown keys continue to fail and require a runner or
+identity-policy decision if they persist after the bounded validation cycle.
+
 Full OS/architecture/runner/hardware key, Bun and workload must match exactly.
 Unknown hardware fails closed. Several evidence-backed complete pairs can cover
 a CI runner class, but identities are never combined or normalized. CPU/core/RAM
