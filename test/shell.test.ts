@@ -1,11 +1,14 @@
 import { expect, test } from "bun:test";
 import { spawnSync } from "node:child_process";
 import {
+  accessSync,
   chmodSync,
+  constants,
   existsSync,
   mkdirSync,
   mkdtempSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -19,6 +22,61 @@ const env = {
   ProgramFiles: "C:\\Program Files",
   PATH: 'C:\\Windows\\system32;"D:\\Portable Git\\bin"',
 };
+
+function actualShell(): string {
+  try {
+    return resolveShell();
+  } catch (error) {
+    if (process.platform === "win32") {
+      const diagnostics: unknown[] = [];
+      const probeEnv = { ...process.env };
+      for (const key of Object.keys(probeEnv)) {
+        if (["BASH_ENV", "ENV", "OSTYPE"].includes(key.toUpperCase()))
+          delete probeEnv[key];
+      }
+      try {
+        findGitBash(undefined, process.env, (path) => {
+          try {
+            const file = statSync(path).isFile();
+            accessSync(path, constants.X_OK);
+            const result = spawnSync(
+              path,
+              [
+                "--noprofile",
+                "--norc",
+                "-p",
+                "-c",
+                'builtin printf \'%s\\n\' "$BASH_VERSION" "$OSTYPE"',
+              ],
+              {
+                env: probeEnv,
+                encoding: "utf8",
+                timeout: 10_000,
+                windowsHide: true,
+              },
+            );
+            diagnostics.push({
+              path,
+              file,
+              status: result.status,
+              stdout: result.stdout,
+              stderr: result.stderr,
+              error: result.error?.message,
+            });
+          } catch (failure) {
+            diagnostics.push({ path, error: String(failure) });
+          }
+          return false;
+        });
+      } catch {}
+      console.error(
+        "Git Bash identification diagnostics:",
+        JSON.stringify(diagnostics),
+      );
+    }
+    throw error;
+  }
+}
 
 test("configured Git Bash wins over common installations and PATH", () => {
   const configured = "E:\\Custom Git\\bin\\bash.exe";
@@ -134,7 +192,7 @@ test("duplicate Windows candidates are probed once and relative PATH entries are
 });
 
 test("resolves actual Bash and preserves an explicit path containing spaces", () => {
-  const shell = resolveShell();
+  const shell = actualShell();
   expect(resolveShell(shell)).toBe(shell);
   if (process.platform === "win32") expect(shell).toMatch(/bash\.exe$/i);
 });
@@ -164,7 +222,7 @@ test("actual identification ignores startup files, inherited OS identity and PAT
   const root = mkdtempSync(join(tmpdir(), "lizzy-shell-startup-"));
   const startup = join(root, "startup.sh");
   const marker = join(root, "startup-ran");
-  const shell = resolveShell();
+  const shell = actualShell();
   try {
     const script = "printf STARTUP_RAN > startup-ran; exit 77\n";
     for (const name of [".bashrc", ".bash_profile", ".profile", "startup.sh"])
