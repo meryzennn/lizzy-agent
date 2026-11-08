@@ -105,12 +105,7 @@ jobs:
             const current = measure([binary], binary, "agent-f00-v1", process.env.LIZZY_PERF_RUNNER);
             report.current = current;
             const baseline = JSON.parse(readFileSync(resolve(repository, "docs/perf/baseline.json"), "utf8"));
-            // T09 synthetic pipeline proof: preserve actual measurement and inject 21% binary growth only for comparison.
-            const reference = baseline.entries.find(entry => entry.key === current.key && entry.bun === current.bun && entry.workload === current.workload);
-            if (!reference) throw new Error(`Synthetic injection requires a matching baseline for ${current.key}.`);
-            const injected = { ...current, metrics: { ...current.metrics, binaryBytes: reference.metrics.binaryBytes * 1.21 } };
-            report.syntheticInjection = { metric: "binaryBytes", factor: 1.21, injected };
-            const failures = checkPerformance(baseline, injected);
+            const failures = checkPerformance(baseline, current);
             report.failures = failures;
             for (const failure of failures) console.error(failure);
             process.exitCode = failures.length ? 1 : 0;

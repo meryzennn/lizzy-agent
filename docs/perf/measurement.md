@@ -245,3 +245,29 @@ The separate three-OS measurement workflow is preserved, including macOS's offic
 For local reproduction, use the pinned toolchain, build normally, then measure the absolute native binary while setting the measurement child environment's `HOME` and `USERPROFILE` to a newly created empty directory and using that directory as cwd. Call `measure([binary], binary, "agent-f00-v1", "local")`, save the JSON, and run `bun run perf <saved-measurement.json>` from the repository root. A plain `bun run perf` in a customized home/project can initialize a different configuration and is not the retained empty-skeleton benchmark.
 
 Startup remains warm-cache process launch/exit timing, with three warmups and 15 retained samples. RSS remains five delayed child snapshots, taken 200 ms after config and shell initialization. For example, the retained local agent startup samples range from 64.4989 to 213.8613 ms while their median is 68.1508 ms; all samples remain available. These numbers do not measure peak RSS, model calls, interactive TUI latency or a cold OS boot. Timing noise and exact hardware coverage must be reviewed before making hosted gates required.
+
+### T09 pipeline evidence
+
+[PR #21](https://github.com/meryzennn/lizzy-agent/pull/21) first ran the explicitly
+marked synthetic injection at head `3ebd08d5bb025cbf5a31ac7a9bdd94c382e08256`,
+measured merge checkout `84c471fdefd1d5b452d34c77264121ed19d1a8f5`.
+The [Windows perf job](https://github.com/meryzennn/lizzy-agent/actions/runs/42508001792/job/128814723104)
+failed with `binaryBytes: 104377349.11999999 bytes exceeds 120% of baseline
+86262272 bytes` and the independent absolute cap of `103514727` bytes.
+The injected value is exactly the matching reference times 1.21. The artifact
+separately preserves the actual native measurement: startup 44.5105 ms, child
+RSS 27684864 bytes, binary 86262272 bytes. This proves pipeline failure
+propagation; it is not an observed application regression. The next commit
+removes the injection and leaves the baseline unchanged.
+
+The [Linux perf job](https://github.com/meryzennn/lizzy-agent/actions/runs/42508001792/job/128814722877)
+failed before injection because its full key was uncovered:
+`linux-x64-ci-ubuntu-latest-de1a12e4f64fc5690f478bcc56157683549c74fb265a3c4ad93b859610a17b3b`.
+It had four `INTEL(R) XEON(R) PLATINUM 8573C` CPUs and 16758398976 RAM bytes.
+The separate [native measurement run](https://github.com/meryzennn/lizzy-agent/actions/runs/42508001861)
+used another Linux key,
+`linux-x64-ci-ubuntu-latest-e9c2dfd08a0b7b068113caa881c99560f7f7aa4b8b8fdc899b4fd25316afbc09`,
+four `Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz` CPUs and 16758403072
+RAM bytes. Its actual complete pair is retained as candidate evidence, not
+substituted for either the approved-key reference or the uncovered job's key.
+The perf artifacts retain measurements and errors even when matching fails.
