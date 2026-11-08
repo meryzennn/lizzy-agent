@@ -26,12 +26,13 @@ Kutipan berikut mempertahankan nilai dan keputusan sumber:
 - CLAUDE.md: "`bun test` tidak boleh menyentuh jaringan atau provider asli; pakai mock provider server." Loopback milik test adalah transport mock yang dimaksud; tidak ada request internet dalam suite.
 - Template fase: "Task ≤ ~400 baris diff. Pecah bila lebih besar." "Spike: type spike, keluarannya dokumen/angka, bukan kode produksi."
 - Workflow: satu issue, branch, dan PR per task; user melakukan merge, pengaturan proteksi branch, penutupan milestone dan rilis.
+- All GitHub issue and PR titles/bodies must be English. Task titles and acceptance text copied by `sync-issues` must be English; preserve parser delimiters and published spec anchors. Use English commit/PR examples, actual issue references, and `Closes #N` for the real issue. The source and English issue wrapper must both reach main before a live `sync-issues --update`.
 
 ---
 
 ## Batas pekerjaan dan prasyarat eksekusi
 
-Ini rencana implementasi, bukan bukti implementasi. Saat rencana pertama ditulis pada 8 November 2026 hanya paket starter yang ada, tanpa Git repository atau Bun yang bisa dijalankan. Snapshot itu bukan status eksekusi terkini; koreksi berikutnya tetap hanya mengubah dua Markdown ini.
+Ini rencana implementasi, bukan bukti implementasi. Saat rencana pertama ditulis pada 8 November 2026 hanya paket starter yang ada, tanpa Git repository atau Bun yang bisa dijalankan. Snapshot itu bukan status eksekusi terkini; koreksi ini hanya menyentuh plan, spec fase dan template fase.
 
 Sebelum task kode: runtime Bun dengan versi pin tersedia, starter menjadi repository Git yang benar, spec disetujui dan issue dibuat. Gunakan prosedur setup awal di `README-KIT.md` untuk repo baru; jangan menebak owner, visibilitas atau remote. Pengecualian commit pertama starter ke `main` hanya berlaku pada setup awal tersebut. Setelah itu gunakan branch task. Jika workspace sudah terisolasi, gunakan worktree yang tersedia; jika perlu isolasi baru, ikuti `superpowers:using-git-worktrees` saat eksekusi.
 
@@ -79,21 +80,21 @@ import { githubSlug, issueBody, issueTitle, parsePhase } from "../scripts/sync-i
 test("spec menghasilkan issue yang menautkan task dan acceptance", () => {
   const source = [
     "# Fase 00 — Skeleton",
-    "## Task F00-T01 — CLI ringan",
+    "## Task F00-T01 — Lightweight CLI",
     "- **Type:** feat",
     "- **Bergantung pada:** —",
     "### Selesai bila",
-    "- [ ] Help bekerja.",
+    "- [ ] Help works.",
   ].join("\r\n");
   const phase = parsePhase(source, "fixture.md");
   const task = phase.tasks[0];
   expect(phase.num).toBe("00");
-  expect(issueTitle(task)).toBe("[F00-T01] CLI ringan");
-  expect(githubSlug(task.heading)).toBe("task-f00-t01--cli-ringan");
+  expect(issueTitle(task)).toBe("[F00-T01] Lightweight CLI");
+  expect(githubSlug(task.heading)).toBe("task-f00-t01--lightweight-cli");
   const body = issueBody(task, "00", "https://example.invalid/spec.md", []);
-  expect(body).toContain("#task-f00-t01--cli-ringan");
+  expect(body).toContain("#task-f00-t01--lightweight-cli");
   expect(body).toContain("<!-- sync-issues: F00-T01 -->");
-  expect(body).toContain("- [ ] Help bekerja.");
+  expect(body).toContain("- [ ] Help works.");
 });
 ```
 
@@ -156,7 +157,7 @@ coverage/
 
 - [ ] **Step 4: Instal hanya tooling dev dan hasilkan lockfile.** `rtk bun add --dev --exact typescript @types/bun @biomejs/biome`. Commit hasil resolusi versi persis dan `bun.lock`; jangan menulis lockfile manual. Di CI ganti `bun-version: latest` dengan `bun-version-file: .bun-version`. Pertahankan check Windows/Linux. Jalankan formatter pada `scripts/sync-issues.ts` bila Biome meminta; perubahan ini sebatas style, tidak mengubah parser. Jika ada diagnostic perilaku, selesaikan terpisah, jangan mematikan lint untuk seluruh skrip.
 - [ ] **Step 5: Verifikasi.** `rtk bun install --frozen-lockfile`, `rtk bun test test/sync-issues.test.ts`, `rtk bun run check` → semuanya exit 0. Check harus benar-benar menjalankan tiga alat.
-- [ ] **Step 6: Commit.** Stage hanya file task; judul `chore(f00): bootstrap Bun dan harness [F00-T01]`. Ambil nomor issue aktual F00-T01, lalu tulis `Refs #` diikuti nomor tersebut sebagai baris terakhir body. Jangan memakai nomor issue karangan atau stage seluruh workspace.
+- [ ] **Step 6: Commit.** Stage hanya file task; judul `chore(f00): bootstrap Bun and validation harness [F00-T01]`. Ambil nomor issue aktual F00-T01, lalu tulis `Refs #` diikuti nomor tersebut sebagai baris terakhir body. Jangan memakai nomor issue karangan atau stage seluruh workspace.
 
 ## Task 2: F00-T02 — Spike baseline boot native
 
@@ -337,7 +338,7 @@ jobs:
 - [ ] **Step 6: Verifikasi dan rekam metode.** `rtk bun test test/measure-perf.test.ts`, `rtk bun run check` → exit 0. Buka PR T02 untuk memicu `pull_request`; kumpulkan tiga artifact native sebelum PR dinyatakan selesai atau user merge. `workflow_dispatch` baru tersedia setelah file workflow ada di default branch; jangan mensyaratkan merge untuk memperoleh bukti pertama. Pertahankan kedua trigger ketika T08 memperluas workflow. Simpan URL run/artifacts dan SHA checkout yang diukur (`GITHUB_SHA` pada PR adalah merge ref, bukan head branch). Isi `docs/perf/measurement.md` dengan metode: 3 warmup + 15 subprocess startup, median; 5 subprocess idle, sampling anak setelah 200 ms; byte artefak; exact Bun, OS/arch, key, runner/image, commit. Ini startup proses baru dengan cache OS hangat, bukan pengukuran boot mesin dingin atau latensi TUI. Batas binary diputuskan di T09 setelah aplikasi diukur juga.
 
 Dokumentasikan kelas hardware sebagai daftar model CPU per logical CPU (diurutkan, jumlah core tetap terwakili) dan total RAM dari `node:os`; frekuensi CPU sesaat tidak masuk hash. CI memakai label GitHub-hosted dari matriks plus hash hardware, tanpa hostname runner ephemeral; image revision tetap metadata audit. Lokal memakai hash host + hardware dan tidak menulis hostname mentah ke measurement, environment artifact, atau laporan publik. Mesin lokal berbeda, penggantian CPU/jumlah core/RAM, OS/arch atau pin Bun membutuhkan baseline matching yang direview; key lama seperti `win32-x64-local` tidak valid. Jangan mengubah threshold untuk mengatasi pergantian kelas runner.
-- [ ] **Step 7: Commit.** `perf(f00): ukur baseline boot native [F00-T02]`, body `Refs #` dengan issue aktual. Tidak mengisi `baseline.json` dengan angka dari mesin lain atau angka contoh.
+- [ ] **Step 7: Commit.** `perf(f00): measure native startup baselines [F00-T02]`, body `Refs #` dengan issue aktual. Tidak mengisi `baseline.json` dengan angka dari mesin lain atau angka contoh.
 
 ## Task 3: F00-T03 — Spike renderer
 
@@ -473,7 +474,7 @@ Ini fixture ASCII kecil, bukan editor produksi. Observer yang sama mengukur **ra
 
 `ProcessTerminal` menegosiasikan Kitty/modifyOtherKeys; kontrol pi harus melalui `matchesKey` dan jalur `stop()` yang sama agar `tui.stop()`, timer, listener dan stdout observer dibersihkan. Backend minimal tidak menegosiasikan protokol: byte 0x03/0x1b menghentikan, CR submit dan DEL backspace; escape sequence lain tidak termasuk workload ASCII minimal. Pertahankan perilaku dan cleanup ini ketika backend dipisah.
 
-- [ ] **Step 5: Uji dan ukur kedua backend.** Test di atas harus lulus. Dari root: `rtk bun spikes/renderer/compare.ts minimal`, lalu `rtk bun spikes/renderer/compare.ts pi`; ketik, submit, stream, resize terminal dan keluar dengan Esc/Ctrl+C. Catat platform, terminal, ukuran viewport, perilaku restore terminal dan hasil resize. Kegagalan resize/input adalah data spike, bukan fitur yang disembunyikan.
+- [ ] **Step 5: Uji dan ukur kedua backend.** Test di atas harus lulus. Dari root terminal native: `rtk run -c "bun spikes/renderer/compare.ts minimal"`, lalu `rtk run -c "bun spikes/renderer/compare.ts pi"`; ketik, submit, stream, resize terminal dan keluar dengan Esc/Ctrl+C. Catat platform, terminal, ukuran viewport, perilaku restore terminal dan hasil resize. Kegagalan resize/input adalah data spike, bukan fitur yang disembunyikan.
 - [ ] **Step 6: Ukur dan jalankan entry final secara terpisah.** Build dua entry yang hanya mengimpor backend masing-masing diperlukan agar ukuran library tidak ikut membengkakkan hasil minimal. Sebelum pengukuran pisahkan fungsi backend dari `compare.ts` menjadi `minimal.ts` dan `pi.ts`, masing-masing mengekspor `runDemo(): Promise<void>`, pertahankan `diffFrame`/`containsEcho` di `compare.ts`, dan ubah dispatcher menjadi dynamic import berdasarkan kind. Pertahankan observer/cleanup kedua backend dan `matchesKey` di backend pi. Buat entry `spikes/renderer/minimal-entry.ts` dengan `import { runDemo } from "./minimal"; await runDemo();` serta `pi-entry.ts` dengan `import { runDemo } from "./pi"; await runDemo();`. Semua file ini hanya bagian paket spike.
 
 Setelah pemisahan, jalankan test dan build bundle dari root di masing-masing OS native:
@@ -489,10 +490,10 @@ Windows (terminal native, Bun pin yang sama):
 ```powershell
 rtk bun build spikes/renderer/minimal-entry.ts --compile --outfile dist/minimal-spike.exe
 rtk bun build spikes/renderer/pi-entry.ts --compile --outfile dist/pi-spike.exe
-rtk proxy bun spikes/renderer/minimal-entry.ts
-rtk proxy bun spikes/renderer/pi-entry.ts
-rtk proxy .\dist\minimal-spike.exe
-rtk proxy .\dist\pi-spike.exe
+rtk run -c "bun spikes/renderer/minimal-entry.ts"
+rtk run -c "bun spikes/renderer/pi-entry.ts"
+rtk run -c ".\dist\minimal-spike.exe"
+rtk run -c ".\dist\pi-spike.exe"
 ```
 
 Linux (terminal native, Bun pin yang sama):
@@ -500,11 +501,13 @@ Linux (terminal native, Bun pin yang sama):
 ```bash
 rtk bun build spikes/renderer/minimal-entry.ts --compile --outfile dist/minimal-spike
 rtk bun build spikes/renderer/pi-entry.ts --compile --outfile dist/pi-spike
-rtk proxy bun spikes/renderer/minimal-entry.ts
-rtk proxy bun spikes/renderer/pi-entry.ts
-rtk proxy ./dist/minimal-spike
-rtk proxy ./dist/pi-spike
+rtk run -c 'bun spikes/renderer/minimal-entry.ts'
+rtk run -c 'bun spikes/renderer/pi-entry.ts'
+rtk run -c './dist/minimal-spike'
+rtk run -c './dist/pi-spike'
 ```
+
+Gunakan `rtk run -c` dari terminal dengan stdin/stdout TTY. RTK 0.42.4 `proxy` mem-pipe output sehingga guard TTY gagal sebelum workload; `run -c` mewariskan stream terminal. Command Windows memakai kutip ganda PowerShell dan path executable Windows; command Linux memakai kutip tunggal shell POSIX. Build dan perintah noninteraktif tetap boleh memakai filter RTK. Probe guard hanya memvalidasi jalur launch, bukan renderer atau native helper.
 
 Ukur byte keempat artefak di masing-masing OS:
 
@@ -514,7 +517,7 @@ rtk bun -e 'import { statSync } from "node:fs"; const suffix = process.platform 
 
 Untuk setiap kombinasi OS × backend × mode (`source`, `compiled`), ulangi workload yang sama pada terminal/viewport yang sama: mulai 120 kolom; tunggu stream token; ketik 50 huruf kecil satu per event, Enter, lalu 50 huruf dan Enter; resize 120 → 80 → 120 sambil stream berjalan; keluar dengan Escape. Ulangi sesi identik dan keluar dengan Ctrl+C. Catat exit code setelah setiap command, minimal 100 sampel, `samplesMs`, `inputToWriteP95Ms`, `unanswered`, hasil submit/resize dan restore cursor/raw mode/keyboard mode. Jangan redirect stdout atau memakai pipe yang menghilangkan TTY. Simpan JSON stderr serta catatan manual per sesi. Build sukses dan source sukses belum membuktikan executable compiled dapat memuat helper native atau memulihkan terminal.
 - [ ] **Step 7: Tulis hasil dan keputusan.** `docs/perf/renderer.md` berisi commit/Bun/package/license, OS/arch/terminal/viewport/protokol keyboard, command build/run persis, path dan byte bundle/binary, serta tabel delapan kombinasi OS × backend × mode dengan kedua exit control dicatat terpisah. Sertakan exit/error startup/helper native, hasil input/stream/resize/restore dan raw samples/latensi dengan definisinya; source tidak boleh mengisi kolom compiled. Kegagalan compiled merupakan hasil perbandingan dan harus memengaruhi keputusan. Perbarui hanya bagian hasil spike ADR-003. Jika executable belum benar-benar dijalankan pada salah satu OS atau bukti belum cukup untuk memilih, catat **belum terbukti**; task belum memenuhi acceptance. TUI produksi tetap Fase 9.
-- [ ] **Step 8: Commit.** `docs(f00): hasil spike renderer [F00-T03]`, `Refs #` nomor issue aktual; PR diberi `spec-change` bila keputusan ADR berubah.
+- [ ] **Step 8: Commit.** `docs(f00): record renderer spike results [F00-T03]`, `Refs #` nomor issue aktual; PR diberi `spec-change` bila keputusan ADR berubah.
 
 ## Task 4: F00-T04 — CLI ringan dan build
 
@@ -614,7 +617,7 @@ Build menggunakan timeout 120 detik, probe tetap 10 detik. Tambahkan script `"bu
           assert.match(run([binary, "--help"]), /Pemakaian/);
           assert.equal(run([binary, "--version"]).trim(), version);
 ```
-- [ ] **Step 5: Commit.** `feat(f00): entry CLI ringan dan binary [F00-T04]`, body `Refs #` issue aktual, setelah `rtk bun run check` hijau.
+- [ ] **Step 5: Commit.** `feat(f00): add a lightweight CLI and binary [F00-T04]`, body `Refs #` issue aktual, setelah `rtk bun run check` hijau.
 
 ## Task 5: F00-T05 — Config JSONC
 
@@ -738,7 +741,7 @@ test("config proyek invalid tidak menghalangi help/version", async () => {
 ```
 
 `rtk bun test test/config.test.ts test/cli.test.ts`, `rtk bun run check`, `rtk bun run build` → exit 0.
-- [ ] **Step 6: Commit.** `feat(f00): config JSONC berlapis [F00-T05]`, `Refs #` issue aktual; catat satu dependency runtime baru beserta alasan ADR-005.
+- [ ] **Step 6: Commit.** `feat(f00): load layered JSONC configuration [F00-T05]`, `Refs #` issue aktual; catat satu dependency runtime baru beserta alasan ADR-005.
 
 ## Task 6: F00-T06 — Git Bash
 
@@ -839,7 +842,7 @@ test("startup Windows tanpa Git memberi petunjuk, help tetap tersedia", async ()
 ```
 
 Subprocess memakai cwd/home fixture kosong untuk menghindari config pribadi. Test spesifik Windows ini bukan pengganti test murni yang berjalan pada kedua OS. Jangan mengubah suite lain menjadi skip.
-- [ ] **Step 6: Green dan commit.** `rtk bun test test/shell.test.ts test/cli.test.ts`, `rtk bun run check` → lulus; cek startup normal di Git Bash asli. Commit `feat(f00): temukan Git Bash Windows [F00-T06]`, body `Refs #` issue aktual.
+- [ ] **Step 6: Green dan commit.** `rtk bun test test/shell.test.ts test/cli.test.ts`, `rtk bun run check` → lulus; cek startup normal di Git Bash asli. Commit `feat(f00): detect Git Bash on Windows [F00-T06]`, body `Refs #` issue aktual.
 
 ## Task 7: F00-T07 — Mock provider
 
@@ -954,7 +957,7 @@ export function startMockProvider() {
 ```
 
 Chunk server berukuran kecil membantu latihan parser berikutnya, tetapi TCP dapat menggabungkannya. Fase 1 tetap harus menguji parser SSE dengan input chunk eksplisit, tool-call delta, abort, dan error. Itu belum implementasi adapter.
-- [ ] **Step 5: Green dan commit.** `rtk bun test test/mock-provider.test.ts`, `rtk bun run check` → lulus tanpa internet. Commit `test(f00): mock dua protokol provider [F00-T07]`, body `Refs #` issue aktual.
+- [ ] **Step 5: Green dan commit.** `rtk bun test test/mock-provider.test.ts`, `rtk bun run check` → lulus tanpa internet. Commit `test(f00): mock both provider protocols [F00-T07]`, body `Refs #` issue aktual.
 
 ## Task 8: F00-T08 — Pemeriksa regresi performa
 
@@ -1090,7 +1093,7 @@ Probe hanya mengamati startup skeleton; belum TUI kosong Fase 9. Jangan menamai 
 
 Workflow dijalankan pada account runner bersih, tanpa config `.lizzy` pribadi. Rekam key, label runner, image dan commit dalam artifact T02. Hello dan agent dari job yang sama harus memiliki key/Bun yang sama; perubahan kelas hardware atau pin Bun memerlukan baseline baru, bukan fallback atau threshold baru.
 - [ ] **Step 6: Green dan negative CLI.** `rtk bun test test/perf.test.ts test/measure-perf.test.ts`, `rtk bun run check`, `rtk bun run build` → exit 0. `rtk bun run perf` saat baseline belum ada wajib exit 1 dengan diagnostic file missing; jangan menambahkan skip agar hijau.
-- [ ] **Step 7: Commit.** `perf(f00): gate tiga metrik terhadap baseline [F00-T08]`, body `Refs #` issue aktual. Gerbang CI baru diwajibkan setelah data T09 tersedia dalam PR yang sama dengan pengaktifannya.
+- [ ] **Step 7: Commit.** `perf(f00): gate three metrics against baselines [F00-T08]`, body `Refs #` issue aktual. Gerbang CI baru diwajibkan setelah data T09 tersedia dalam PR yang sama dengan pengaktifannya.
 
 ## Task 9: F00-T09 — Baseline dan CI perf
 
@@ -1217,7 +1220,7 @@ CHECKS='["check (ubuntu-latest)", "check (windows-latest)", "perf (ubuntu-latest
 ```
 
 Perbarui daftar nama di `docs/WORKFLOW.md`. Syntax check tanpa side effect: dari Windows `rtk proxy "C:\Program Files\Git\bin\bash.exe" --noprofile --norc -n scripts/setup-github.sh`. User menjalankan setup untuk mengubah proteksi; exit sukses skrip saja bukan bukti proteksi terpasang karena skrip menangkap kegagalan API. Bukti adalah daftar required checks aktual di GitHub.
-- [ ] **Step 7: Verifikasi dan commit.** `rtk bun run check`, `rtk bun run build`, `rtk bun run perf` pada baseline matching, CI final hijau. Commit `perf(f00): baseline terukur dan CI wajib [F00-T09]`, body `Refs #` issue aktual. Jangan membuat baseline dari angka contoh plan ini.
+- [ ] **Step 7: Verifikasi dan commit.** `rtk bun run check`, `rtk bun run build`, `rtk bun run perf` pada baseline matching, CI final hijau. Commit `perf(f00): record baselines and require performance CI [F00-T09]`, body `Refs #` issue aktual. Jangan membuat baseline dari angka contoh plan ini.
 
 ## Task 10: F00-T10 — Dokumentasi dan gerbang
 
@@ -1276,7 +1279,7 @@ rtk bun test spikes/renderer/compare.test.ts
 
 Ditambah binary smoke Windows/Linux, results native macOS, dan kedua run CI injeksi/final T09. Eval model asli tidak dijalankan karena harness eval baru Fase 2 dan F0 belum memanggil model.
 - [ ] **Step 4: Catat bukti aktual.** `docs/perf/fase-00-gate.md` harus memuat tanggal/commit, Bun, OS/arch/terminal, setiap perintah dengan exit/output ringkas, metrics aktual/reference/selisih%, URL artifacts tiga OS, hasil dua backend renderer, URL CI merah injeksi dan hijau final, serta nama required checks aktual. Sumber angka adalah file baseline/result, bukan salinan narasi. Item tanpa bukti ditandai **belum terbukti** dan gerbang fase tetap belum lulus. Tautkan laporan dari spec fase.
-- [ ] **Step 5: Review coverage dan commit.** Cocokkan sembilan keluaran Fase 0 di `PLAN.md:428` dengan sepuluh task ini. Commit `docs(f00): pemakaian dan bukti gerbang [F00-T10]`, body `Refs #` issue aktual. User menutup milestone setelah review. Fase 0 bukan batas rilis; tidak membuat tag atau memulai Fase 1 otomatis.
+- [ ] **Step 5: Review coverage dan commit.** Cocokkan sembilan keluaran Fase 0 di `PLAN.md:428` dengan sepuluh task ini. Commit `docs(f00): document usage and phase evidence [F00-T10]`, body `Refs #` issue aktual. User menutup milestone setelah review. Fase 0 bukan batas rilis; tidak membuat tag atau memulai Fase 1 otomatis.
 
 ## Coverage terhadap spec
 
@@ -1304,11 +1307,19 @@ Ditambah binary smoke Windows/Linux, results native macOS, dan kedua run CI inje
 
 Dokumen ditinjau terhadap Fase 0, enam ADR, workflow, format parser issue dan enam temuan preflight. Koreksi tidak mengimplementasikan task aplikasi atau mengubah keputusan ADR. Bukti runtime aplikasi, Windows/Linux/macOS, benchmark, dan keputusan renderer tetap merupakan keluaran task yang harus benar-benar dijalankan.
 
-Verifikasi koreksi yang dijalankan pada 8 November 2026:
+Verifikasi enam koreksi awal pada head `787b0ef93fb975dc57223d63af7b5c1e4a560eef`, 8 November 2026 (pemeriksaan ini tidak membuktikan jalur launch TTY):
 
 - `rtk proxy node scripts/sync-issues.ts docs/phases/fase-00.md --dry-run` → exit 0, sepuluh task beserta label/dependensi terbaca, tidak memanggil GitHub. Node 24.18 dipakai untuk skrip starter portabel dan pemeriksaan dokumen; ini bukan target runtime produk.
 - Pemeriksa sementara di luar repository memakai `parsePhase`/`githubSlug` existing: sepuluh ID dan dependensi identik dengan `origin/main`, graph tanpa siklus, 15 tautan lokal/anchor, enam JSON dan 48 fence berpasangan valid; trigger PR/manual dan deklarasi file T05 cocok.
 - Bun 1.4.2 menjalankan contoh identity/comparator/assembler yang diekstrak ke direktori sementara: 9 test lulus, 0 gagal, 34 assertions. Zod 4.6.7 dipasang hanya di fixture sementara; tidak ada dependency atau file aplikasi yang ditambahkan ke repository. Nilai 100/120/121 tetap data sintetis.
 - Enam test kontrol (7 assertions) lulus terhadap `keys.ts` dari commit pi yang dipin. Ini pemeriksaan encoding tombol, bukan menjalankan renderer/package/native helper.
 - Skrip Bun sementara di luar checkout mengimpor parser repository dengan file URL absolut; versi import relatif gagal seperti yang diharapkan. Keempat blok import Actions T02/T04/T08/T09 juga berhasil terhadap checkout fixture. Child failure tetap exit 1; step gate T09 utuh dengan pengukur sintetis memberi exit 0 tepat 20%, exit 1 pada 21% dan mismatch hardware. Tidak ada compile, benchmark atau run GitHub Actions yang disimulasikan sebagai bukti native.
-- `rtk git diff --check` → exit 0. Hanya kedua dokumen plan/spec berubah; roadmap, ADR dan file aplikasi tidak diubah. Status CI docs dilaporkan di PR; job starter yang melewati pemeriksaan aplikasi bukan bukti test aplikasi.
+- `rtk git diff --check` → exit 0. Roadmap, ADR dan file aplikasi tidak diubah. Status CI docs dilaporkan di PR; job starter yang melewati pemeriksaan aplikasi bukan bukti test aplikasi.
+
+### Follow-up verification: TTY launches and English GitHub text
+
+- RTK 0.42.4 `run --help` documents `run -c` as raw shell execution. Context7 `/rtk-ai/rtk` was consulted; installed help and focused execution establish the behavior of this installed version.
+- In a Windows PTY with pinned Bun 1.4.2, all four final Windows launch commands and both initial comparison commands were extracted from this plan and run against a temporary fixture containing the exact TTY guard. All six reported stdin/stdout/stderr TTY `true` and exited 0. Source and compiled guard launches retained exit 7. The old `rtk proxy` route reported stdin `true`, stdout/stderr `false`, and failed the guard with exit 1.
+- Only the tiny guard was compiled, in a temporary directory outside the repository. No renderer, native helper, input/stream/resize workload or benchmark ran. Linux command quoting passed Git Bash `bash -n`; native Linux execution remains unverified. The separate source/compiled workload and report requirements above are unchanged.
+- Offline parser checks verified ten unchanged task IDs/dependency lists, ten exact English titles, 31 English acceptance items, and no legacy anchor leaking into acceptance. All ten existing remote link fragments match explicit anchors; all ten generated English fragments match headings. GitHub's Markdown API retained the explicit anchors and rendered the new headings; it does not itself emit automatic heading IDs.
+- The English T01 plan example passed its targeted test (1 test, 6 assertions). Document checks and `sync-issues --dry-run` passed. The local starter still emits the old fixed issue wrapper, owned by the separate T01 PR; no live sync runs until both that wrapper and these English sources are merged. Earlier identity/comparator/key tests were not rerun for this command/text-only follow-up.

@@ -72,7 +72,10 @@ Perintah di bawah adalah acceptance yang akan dijalankan saat implementasi; belu
 - [ ] CI `check (ubuntu-latest)`, `check (windows-latest)`, `perf (ubuntu-latest)`, dan `perf (windows-latest)` berjalan. User memverifikasi keempat nama pada proteksi branch setelah meninjau setup.
 - [ ] `rtk bun scripts/sync-issues.ts docs/phases/fase-00.md --dry-run` membaca sepuluh task tanpa memanggil GitHub.
 
-## Task F00-T01 — Bootstrap paket dan harness pemeriksaan
+<!-- Task titles and acceptance text are copied to GitHub and must be English. Keep legacy anchors for published issue links. -->
+## Task F00-T01 — Bootstrap the package and validation harness
+
+<a id="task-f00-t01--bootstrap-paket-dan-harness-pemeriksaan"></a>
 
 - **Type:** chore
 - **Bergantung pada:** —
@@ -90,10 +93,12 @@ Perintah di bawah adalah acceptance yang akan dijalankan saat implementasi; belu
 
 ### Selesai bila
 
-- [ ] Paket, lockfile, pin Bun, lint/format, TypeScript strict, dan test tersedia bersama.
-- [ ] Check Linux dan Windows memakai versi Bun yang sama dan tidak lagi melewati pengujian.
+- [ ] The package, lockfile, Bun pin, lint/format tooling, strict TypeScript, and tests are introduced together.
+- [ ] Linux and Windows checks use the same Bun version and execute the tests without skipping them.
 
-## Task F00-T02 — Spike baseline boot native tiga OS
+## Task F00-T02 — Measure native startup baselines on three operating systems
+
+<a id="task-f00-t02--spike-baseline-boot-native-tiga-os"></a>
 
 - **Type:** spike
 - **Labels:** os:windows
@@ -112,12 +117,14 @@ Perintah di bawah adalah acceptance yang akan dijalankan saat implementasi; belu
 
 ### Selesai bila
 
-- [ ] Hello-world benar-benar dibangun dan dijalankan native pada Linux, Windows, macOS.
-- [ ] Startup dan RSS anak diukur berulang; ukuran menggunakan byte binary.
-- [ ] Data menyebut runner/OS/arsitektur/Bun, SHA checkout dan key dengan hash identitas lokal/kelas hardware CI; hostname lokal mentah tidak dipublikasikan. Hello-world dibedakan dari aplikasi.
-- [ ] Bukti tiga OS tersedia dari PR T02 sebelum merge; import checkout dalam step Bun memakai file URL absolut dari `process.cwd()` dan kegagalan tetap exit nonzero.
+- [ ] The hello-world program is compiled and executed natively on Linux, Windows, and macOS.
+- [ ] Startup time and child-process RSS are measured repeatedly; binary size is recorded in bytes.
+- [ ] Measurements identify the runner, OS, architecture, Bun version, checkout SHA, and key containing the local identity or CI hardware-class hash; raw local hostnames are not published. Measurements distinguish hello-world from the application.
+- [ ] Evidence from all three operating systems is available from the T02 pull request before merge; checkout imports in Bun steps use absolute file URLs from `process.cwd()`, and failures retain nonzero exit codes.
 
-## Task F00-T03 — Spike dua renderer dan keputusan ADR-003
+## Task F00-T03 — Compare renderers and record the ADR-003 decision
+
+<a id="task-f00-t03--spike-dua-renderer-dan-keputusan-adr-003"></a>
 
 - **Type:** spike
 - **Labels:** os:windows
@@ -136,12 +143,14 @@ Perintah di bawah adalah acceptance yang akan dijalankan saat implementasi; belu
 
 ### Selesai bila
 
-- [ ] Kedua opsi diperiksa pada workload identik, termasuk lisensi dan dampak ukuran; delapan kombinasi OS × backend × source/compiled memiliki hasil input/stream/resize/exit/restore dan kedua kontrol keluar dicatat. Build sukses saja tidak memenuhi bukti compiled/native-helper.
-- [ ] Kontrol pi memakai `matchesKey` dan tetap membersihkan terminal lewat `stop()`; backend raw minimal mempertahankan kontrak byte yang didokumentasikan.
-- [ ] Latensi yang dicatat membedakan biaya render/write dari input-ke-cat terminal.
-- [ ] ADR-003 memilih opsi berdasarkan bukti; spike tidak menjadi TUI produksi Fase 9.
+- [ ] Both options are evaluated with the same workload, including their licenses and size impact; all eight OS × backend × source/compiled combinations record input, streaming, resize, exit, and terminal restoration, with both exit controls recorded. Successful builds alone do not establish compiled/native-helper compatibility. Interactive launches preserve stdin/stdout TTYs.
+- [ ] Pi controls use `matchesKey` and retain terminal cleanup through `stop()`; the minimal raw backend preserves its documented byte contract.
+- [ ] Recorded latency distinguishes render/write overhead from terminal input-to-paint latency.
+- [ ] ADR-003 selects an option based on evidence; the spike does not implement the production TUI planned for Phase 9.
 
-## Task F00-T04 — Entry CLI ringan dan binary
+## Task F00-T04 — Add a lightweight CLI entry and compiled binary
+
+<a id="task-f00-t04--entry-cli-ringan-dan-binary"></a>
 
 - **Type:** feat
 - **Labels:** os:windows
@@ -160,11 +169,13 @@ Perintah di bawah adalah acceptance yang akan dijalankan saat implementasi; belu
 
 ### Selesai bila
 
-- [ ] Flag informasi tidak memuat zod, renderer, model, atau config.
-- [ ] Argumen invalid exit 2, stdout kosong, stderr memberi cara penggunaan.
-- [ ] Binary native dan source entry memiliki perilaku sama.
+- [ ] Informational flags do not load zod, the renderer, models, or configuration.
+- [ ] Invalid arguments exit with code 2, leave stdout empty, and explain usage on stderr.
+- [ ] The native binary and source entry exhibit the same behavior.
 
-## Task F00-T05 — Config JSONC global dan proyek
+## Task F00-T05 — Load global and project JSONC configuration
+
+<a id="task-f00-t05--config-jsonc-global-dan-proyek"></a>
 
 - **Type:** feat
 - **Bergantung pada:** F00-T04
@@ -182,11 +193,13 @@ Perintah di bawah adalah acceptance yang akan dijalankan saat implementasi; belu
 
 ### Selesai bila
 
-- [ ] Config kosong valid dan menghasilkan `version: 1`; versi lain ditolak tanpa migrasi spekulatif.
-- [ ] Config yang ada tetapi rusak/tidak terbaca gagal jelas; tidak diam-diam diabaikan.
-- [ ] Hanya zod menjadi dependency runtime sesuai ADR-005; tidak ada parser tambahan.
+- [ ] Empty configuration is valid and resolves to `version: 1`; other versions are rejected without speculative migrations.
+- [ ] Existing configuration that is malformed or unreadable produces a clear error rather than being silently ignored.
+- [ ] Only zod is added as a runtime dependency, as required by ADR-005; no additional parser is introduced.
 
-## Task F00-T06 — Deteksi Git Bash dan startup normal
+## Task F00-T06 — Detect Git Bash and initialize normal startup
+
+<a id="task-f00-t06--deteksi-git-bash-dan-startup-normal"></a>
 
 - **Type:** feat
 - **Labels:** os:windows
@@ -205,11 +218,13 @@ Perintah di bawah adalah acceptance yang akan dijalankan saat implementasi; belu
 
 ### Selesai bila
 
-- [ ] Urutan config → instalasi Git umum → PATH terbukti.
-- [ ] Config eksplisit salah menghasilkan error, bukan fallback diam-diam; path ber-spasi aman.
-- [ ] Startup Windows tanpa Git Bash memberi URL instalasi dan nama field config.
+- [ ] Tests prove the resolution order: configuration, common Git installation paths, then PATH.
+- [ ] An invalid explicit configuration produces an error rather than silently falling back; paths containing spaces work correctly.
+- [ ] Windows startup without Git Bash reports the installation URL and the configuration field to set.
 
-## Task F00-T07 — Mock provider OpenAI dan Anthropic
+## Task F00-T07 — Mock OpenAI and Anthropic providers
+
+<a id="task-f00-t07--mock-provider-openai-dan-anthropic"></a>
 
 - **Type:** test
 - **Bergantung pada:** F00-T01
@@ -226,11 +241,13 @@ Perintah di bawah adalah acceptance yang akan dijalankan saat implementasi; belu
 
 ### Selesai bila
 
-- [ ] Server memakai `127.0.0.1` dan `port: 0`; tidak ada panggilan provider asli.
-- [ ] Payload mempunyai struktur wire protokol yang benar dan kunci palsu yang jelas palsu.
-- [ ] Request tak dikenal mendapat 404; request/response dan resource server terisolasi per test.
+- [ ] The server binds to `127.0.0.1` with `port: 0`; tests never call a real provider.
+- [ ] Payloads follow the correct protocol wire formats and use clearly fake credentials.
+- [ ] Unknown requests return 404; each test owns isolated requests, responses, and server resources.
 
-## Task F00-T08 — Pemeriksa regresi performa
+## Task F00-T08 — Enforce performance regression checks
+
+<a id="task-f00-t08--pemeriksa-regresi-performa"></a>
 
 - **Type:** perf
 - **Labels:** os:windows
@@ -249,11 +266,13 @@ Perintah di bawah adalah acceptance yang akan dijalankan saat implementasi; belu
 
 ### Selesai bila
 
-- [ ] Ketiga metrik diperiksa independen, termasuk binary.
-- [ ] RSS yang diukur milik proses anak yang sudah memuat config/shell, bukan RSS pengukur.
-- [ ] Mismatch host lokal, CPU/jumlah core/RAM, kelas runner, OS/arch, Bun atau workload ditolak; key lama tanpa fingerprint juga ditolak. Tidak ada fallback baseline atau baseline kosong yang membuat CI hijau.
+- [ ] All three metrics are checked independently, including binary size.
+- [ ] The RSS measurement belongs to the child process after configuration and shell initialization, not to the measurement process.
+- [ ] Mismatched local hosts, CPU models, core counts, RAM, runner classes, OS, architecture, Bun versions, or workloads are rejected; legacy keys without fingerprints are also rejected. Baseline fallbacks or missing baselines cannot make CI pass.
 
-## Task F00-T09 — Baseline disetujui dan job perf wajib
+## Task F00-T09 — Approve measured baselines and require performance CI
+
+<a id="task-f00-t09--baseline-disetujui-dan-job-perf-wajib"></a>
 
 - **Type:** perf
 - **Labels:** os:windows, spec-change
@@ -272,11 +291,13 @@ Perintah di bawah adalah acceptance yang akan dijalankan saat implementasi; belu
 
 ### Selesai bila
 
-- [ ] Baseline tiga OS berisi pasangan hello/agent dengan key/Bun sama per OS/kelas runner; entry lokal terikat fingerprint mesin pengukur. Perubahan baseline mendapat review `spec-change`.
-- [ ] Check dan perf Linux/Windows berjalan tanpa skip bila input baseline hilang.
-- [ ] Nama job pada `CHECKS` sama dengan CI; perubahan proteksi dijalankan user.
+- [ ] Baselines contain actual hello/agent measurements from all three operating systems, with matching keys and Bun versions per OS/runner class; local entries use the measurement machine's fingerprint. Baseline changes receive a `spec-change` review.
+- [ ] Linux and Windows check and performance jobs run without skipping missing baseline input.
+- [ ] Job names in `CHECKS` match CI; the user applies branch-protection changes.
 
-## Task F00-T10 — Dokumentasi pemakaian dan bukti gerbang fase
+## Task F00-T10 — Document usage and phase completion evidence
+
+<a id="task-f00-t10--dokumentasi-pemakaian-dan-bukti-gerbang-fase"></a>
 
 - **Type:** docs
 - **Bergantung pada:** F00-T09
@@ -294,12 +315,14 @@ Jalankan seluruh daftar gerbang di atas; laporan memuat hasil tiap perintah, URL
 
 ### Selesai bila
 
-- [ ] README menjelaskan status skeleton dan cara membangun/mengecek; tidak mengklaim agent sudah memanggil model.
-- [ ] Bukti tiga OS, dua protokol mock, dua spike dan regresi yang sengaja dibuat tercatat.
-- [ ] Penutupan milestone/rilis/merge tetap tindakan user; Fase 1 belum dieksekusi.
+- [ ] The README explains the skeleton's current capabilities and build/check commands without claiming that model calls are implemented.
+- [ ] Evidence covers all three operating systems, both mock protocols, both spikes, and the deliberately injected regression.
+- [ ] The user retains control of milestone closure, releases, and merges; Phase 1 has not been executed.
 
 ## Laporan gerbang
 
 Status saat spec ditulis: **belum dijalankan**. Tidak ada kode aplikasi atau baseline yang dibuat oleh pekerjaan perencanaan ini. Bukti implementasi akan dicatat oleh F00-T10 setelah sembilan task sebelumnya selesai dan hasil CI tersedia.
 
 Koreksi rencana 8 November 2026 memperbaiki contoh Actions, trigger baseline, identitas lingkungan, kontrol/eksekusi compiled renderer, dan daftar file T05. Sepuluh ID task, dependensi dan keputusan ADR tetap. Verifikasi koreksi hanya mencakup dokumen dan pemeriksaan contoh terisolasi; tidak membuktikan benchmark, CI aplikasi, atau terminal native tiga OS. Detail perintah dan batas verifikasi ada pada bagian status verifikasi rencana.
+
+Follow-up review corrected interactive launches to preserve TTYs and translated the task titles and acceptance text copied to GitHub. Explicit legacy anchors preserve existing issue links. English sources and the separately owned English issue wrapper must both be merged before live issue synchronization; no live update was run from this branch.
