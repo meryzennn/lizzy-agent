@@ -9,7 +9,12 @@ import { version } from "../package.json";
 const entry = resolve("src/cli.ts");
 const invoke = (
   args: readonly string[],
-  options: { preload?: string; cwd?: string; home?: string } = {},
+  options: {
+    preload?: string;
+    cwd?: string;
+    home?: string;
+    env?: NodeJS.ProcessEnv;
+  } = {},
 ) => {
   const directory = mkdtempSync(join(tmpdir(), "lizzy-cli-env-"));
   const home = options.home ?? directory;
@@ -23,7 +28,7 @@ const invoke = (
       ],
       {
         cwd: options.cwd ?? directory,
-        env: { ...process.env, HOME: home, USERPROFILE: home },
+        env: { ...process.env, ...options.env, HOME: home, USERPROFILE: home },
         encoding: "utf8",
         timeout: 10_000,
         windowsHide: true,
@@ -70,6 +75,73 @@ test("normal startup is an honest skeleton on stderr", () => {
   expect(result.stdout).toBe("");
   expect(result.stderr).toContain("Skeleton");
   expect(result.stderr).toContain("not available");
+});
+
+test("Windows startup without Git fails while all informational flags remain available", () => {
+  if (process.platform !== "win32") return;
+  const root = mkdtempSync(join(tmpdir(), "lizzy-cli-no-git-"));
+  const env = {
+    PATH: root,
+    Path: root,
+    ProgramFiles: root,
+    ProgramW6432: root,
+    "ProgramFiles(x86)": root,
+    LOCALAPPDATA: root,
+  };
+  try {
+    const result = invoke([], { cwd: root, home: root, env });
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toContain("Git Bash");
+    expect(result.stderr).toContain("https://git-scm.com/download/win");
+    expect(result.stderr).toContain("shell.bash");
+    expect(result.stderr).not.toContain("Skeleton");
+    for (const flag of ["--help", "-h", "--version", "-v"]) {
+      const info = invoke([flag], { cwd: root, home: root, env });
+      expect(info.status).toBe(0);
+      if (flag.includes("h")) expect(info.stdout).toContain("Usage: agent");
+      else expect(info.stdout).toBe(`${version}\n`);
+      expect(info.stderr).toBe("");
+    }
+    mkdirSync(join(root, ".lizzy"));
+    writeFileSync(
+      join(root, ".lizzy", "config.jsonc"),
+      '{"secret":"FAKE_SECRET_NEVER_REAL",',
+    );
+    for (const flag of ["--help", "-h", "--version", "-v"]) {
+      const info = invoke([flag], { cwd: root, home: root, env });
+      expect(info.status).toBe(0);
+      expect(info.stdout.length).toBeGreaterThan(0);
+      expect(info.stderr).toBe("");
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("invalid configured shell blocks startup without falling back to installed Bash", () => {
+  const root = mkdtempSync(join(tmpdir(), "lizzy-cli-shell-config-"));
+  try {
+    mkdirSync(join(root, ".lizzy"));
+    writeFileSync(
+      join(root, ".lizzy", "config.jsonc"),
+      JSON.stringify({ shell: { bash: join(root, "missing", "bash.exe") } }),
+    );
+    const result = invoke([], { cwd: root, home: root });
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toContain("shell.bash");
+    expect(result.stderr).not.toContain("Skeleton");
+    for (const flag of ["--help", "-h", "--version", "-v"]) {
+      const info = invoke([flag], { cwd: root, home: root });
+      expect(info.status).toBe(0);
+      expect(info.stdout.length).toBeGreaterThan(0);
+      expect(info.stderr).toBe("");
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test("startup failure exits 1 while informational flags still succeed", () => {
