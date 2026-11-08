@@ -1,0 +1,10 @@
+{
+  "id": "msg_fake",
+  "type": "message",
+  "role": "assistant",
+  "model": "fake-model",
+  "content": [{ "type": "text", "text": "Hello 🌍" }],
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "usage": { "input_tokens": 4, "output_tokens": 3 }
+}
