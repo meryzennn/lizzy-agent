@@ -26,3 +26,33 @@ jobs:
           bun-version-file: .bun-version
       - run: bun install --frozen-lockfile
       - run: bun run check
+      - run: bun run build
+      - name: Binary smoke
+        shell: bun {0}
+        run: |
+          import assert from "node:assert/strict";
+          import { spawnSync } from "node:child_process";
+          import { tmpdir } from "node:os";
+          import { resolve } from "node:path";
+          import { pathToFileURL } from "node:url";
+          const { default: { version } } = await import(pathToFileURL(resolve(process.cwd(), "package.json")).href);
+          const { run } = await import(pathToFileURL(resolve(process.cwd(), "src/platform/process.ts")).href);
+          const entry = resolve("src/cli.ts");
+          const binary = resolve("dist", process.platform === "win32" ? "agent.exe" : "agent");
+          assert.match(run([binary, "--help"]), /Usage: agent/);
+          assert.equal(run([binary, "--version"]), `${version}\n`);
+          const cases = [[], ["--help"], ["-h"], ["--version"], ["-v"], ["--unknown"], ["prompt"], ["--help", "--unknown"], ["--version", "prompt"], ["--version=false"]];
+          for (const args of cases) {
+            const source = spawnSync(process.execPath, [entry, ...args], { encoding: "utf8", timeout: 10_000, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
+            const compiled = spawnSync(binary, args, { cwd: tmpdir(), encoding: "utf8", timeout: 10_000, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
+            assert.ifError(source.error);
+            assert.ifError(compiled.error);
+            assert.equal(source.signal, null);
+            assert.equal(compiled.signal, null);
+            assert.deepEqual(
+              { status: compiled.status, stdout: compiled.stdout, stderr: compiled.stderr },
+              { status: source.status, stdout: source.stdout, stderr: source.stderr },
+              `Source/binary mismatch for ${JSON.stringify(args)}`,
+            );
+          }
+          console.log(`Native binary passed help/version and ${cases.length} source/binary cases, running outside the checkout.`);
