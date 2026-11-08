@@ -2,6 +2,8 @@
 
 Dokumen ini menjelaskan cara proyek dikerjakan, oleh kamu maupun Claude Code. Aturan ringkasnya ada di `CLAUDE.md`; di sini alasannya.
 
+All GitHub issue/PR titles and bodies, and all authored GitHub discussions or comments, must be in English regardless of the chat language or examples below. Write phase/task titles and acceptance prose copied by `sync-issues` in English too, preserving parser headings, IDs, sync markers, and existing link anchors. Verify the English source is on `main` before syncing issues.
+
 ## 1. Spec di file MD, status di Issues
 
 Keduanya dipakai, dengan peran berbeda. Isinya tidak diduplikasi.

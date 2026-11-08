@@ -5,6 +5,8 @@ argument-hint: <nomor fase, mis. 06>
 
 Fase: **$ARGUMENTS**
 
+Write every GitHub issue/PR title, body, and authored discussion or comment in English regardless of the chat language. Keep phase/task titles and acceptance prose copied by `sync-issues` in English, preserving parser headings, IDs, sync markers, and existing link anchors.
+
 1. `git switch main && git pull --ff-only`.
 2. Pastikan semua issue di milestone fase ini tertutup
    (`gh issue list --milestone "<judul>" --state open`). Kalau masih ada: sebutkan, lalu berhenti.

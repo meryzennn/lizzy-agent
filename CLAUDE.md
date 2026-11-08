@@ -25,6 +25,8 @@ Kalau sumber-sumber ini bertabrakan, urutannya: ADR > prinsip C di PLAN > fase M
 
 ## Alur kerja wajib
 
+**GitHub language:** Every issue/PR title and body, and every authored GitHub discussion or comment, must be in English regardless of the chat language. Phase and task titles and acceptance prose copied by `sync-issues` must also be English; preserve parser headings, task IDs, sync markers, and existing link anchors. This rule overrides the language of examples below.
+
 1. **Jangan pernah commit ke `main`.** Mulai dari `git switch main && git pull --ff-only`, lalu branch:
    - task kode: `fNN/tMM-slug-pendek` (contoh `f06/t03-skema-combo`)
    - dokumen fase: `docs/fNN-slug` (contoh `docs/f06-rencana`)
