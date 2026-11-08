@@ -23,11 +23,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest # Fase 0: ganti ke versi tetap
-      # Sebelum Fase 0 membuat package.json, PR docs tetap lulus.
-      - if: hashFiles('package.json') == ''
-        run: echo "Belum ada package.json; check dilewati."
-      - if: hashFiles('package.json') != ''
-        run: bun install --frozen-lockfile
-      - if: hashFiles('package.json') != ''
-        run: bun run check
+          bun-version-file: .bun-version
+      - run: bun install --frozen-lockfile
+      - run: bun run check
