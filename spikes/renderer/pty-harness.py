@@ -130,6 +130,8 @@ def session(args, root, directory, backend, mode, control, failure=False):
     command = [args.bun, str(root / "spikes" / "renderer" / f"{backend}-entry.ts")] if mode == "source" else [str(directory / f"{backend}-spike{'.exe' if os.name == 'nt' else ''}")]
     config = {"command": command, "cwd": str(root if mode == "source" else directory),
               "stderr": str(prefix) + ".stderr", "terminal": str(prefix) + ".terminal.json"}
+    Path(config["terminal"]).unlink(missing_ok=True)
+    Path(config["stderr"]).unlink(missing_ok=True)
     config_path = str(prefix) + ".config.json"
     save(config_path, config)
     env = {**os.environ, "TERM": "xterm-256color", "RENDERER_SPIKE_FAIL": "1" if failure else "0"}
@@ -185,7 +187,7 @@ def self_test():
     assert not controls_restored("\x1b[?25l")
     assert not controls_restored("\x1b[>7u")
     from types import SimpleNamespace
-    from unittest.mock import patch
+    from unittest.mock import Mock, patch
     calls = []
     fake_modules = {"fcntl": SimpleNamespace(ioctl=lambda fd, *args: calls.append(fd)),
                     "termios": SimpleNamespace(TIOCSWINSZ=0)}
@@ -195,6 +197,25 @@ def self_test():
             terminal.fd = fd
             terminal.resize(120)
     assert calls == [0, 5], "fork child resizes stdin; parent resizes the master"
+    stale_results = []
+    with tempfile.TemporaryDirectory() as temporary:
+        directory = Path(temporary)
+        args = SimpleNamespace(output=directory, bun="bun", rtk=None)
+        for failure in (False, True):
+            prefix = directory / ("minimal-source-escape" + ("-failure" if failure else ""))
+            save(str(prefix) + ".terminal.json", dict(restored=True, exitCode=1 if failure else 0))
+            metrics = {"kind": "metrics", **good, "inputToWriteP95Ms": 1,
+                       "error": "Injected lifecycle failure" if failure else None}
+            Path(str(prefix) + ".stderr").write_text(json.dumps(metrics) + "\n", encoding="utf-8")
+            empty = Mock(output="")
+            with patch.object(sys.modules[__name__], "Terminal", return_value=empty), \
+                 patch.object(sys.modules[__name__], "wait_for", side_effect=lambda predicate: predicate()), \
+                 patch.object(time, "sleep"), patch("builtins.print"):
+                stale_results.append(session(args, directory, directory, "minimal", "source", "escape", failure))
+            empty.write.assert_not_called()
+            empty.close.assert_called_once()
+    assert not any(result["success"] for result in stale_results), "empty sessions must not accept stale evidence"
+    assert all(result["terminal"] == {"timeout": True} and result["metrics"] is None for result in stale_results)
 
 
 def main():
