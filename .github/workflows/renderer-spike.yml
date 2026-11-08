@@ -1,0 +1,33 @@
+name: renderer-spike
+
+on:
+  pull_request:
+    paths:
+      - 'spikes/renderer/**'
+      - '.github/workflows/renderer-spike.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  native-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - run: bun install --frozen-lockfile
+        working-directory: spikes/renderer
+      - run: bun test ./spikes/renderer/compare.test.ts
+      - run: python3 spikes/renderer/pty-harness.py --self-test
+      - run: python3 spikes/renderer/pty-harness.py --output dist/renderer-linux
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renderer-linux
+          path: dist/renderer-linux/
+          if-no-files-found: error

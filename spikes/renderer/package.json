@@ -1,0 +1,8 @@
+{
+  "name": "lizzy-renderer-spike",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@earendil-works/pi-tui": "1.5.0"
+  }
+}
