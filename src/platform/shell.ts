@@ -65,23 +65,20 @@ function isBash(path: string): boolean {
       if (["BASH_ENV", "ENV", "OSTYPE"].includes(key.toUpperCase()))
         delete env[key];
     }
-    // Privileged mode also ignores imported functions and shell options.
+    // Newer Git Bash reports OSTYPE=cygwin; its runtime uname still identifies MSYS.
+    const program =
+      "builtin printf '%s\\n' \"$BASH_VERSION\"" +
+      (process.platform === "win32" ? "; /usr/bin/uname -s" : "");
     const output = run(
-      [
-        path,
-        "--noprofile",
-        "--norc",
-        "-p",
-        "-c",
-        'builtin printf \'%s\\n\' "$BASH_VERSION" "$OSTYPE"',
-      ],
+      [path, "--noprofile", "--norc", "-p", "-c", program],
       env,
     )
       .trim()
       .split(/\r?\n/);
     return (
       /^\d+\.\d+/.test(output[0] ?? "") &&
-      (process.platform !== "win32" || output[1] === "msys")
+      (process.platform !== "win32" ||
+        /^(MINGW\d*|MSYS)_NT-/.test(output[1] ?? ""))
     );
   } catch {
     return false;
