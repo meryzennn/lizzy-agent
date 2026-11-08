@@ -50,7 +50,11 @@ export function checkPerformance(
   const failures: string[] = [];
   for (const metric of ["versionMs", "idleRssBytes", "binaryBytes"] as const) {
     const unit = metric === "versionMs" ? "milliseconds" : "bytes";
-    if (sample.metrics[metric] > reference.metrics[metric] * 1.2)
+    // One ULP at the 1.2 ratio accounts for floating-point boundary rounding.
+    if (
+      sample.metrics[metric] / reference.metrics[metric] >
+      1.2 + Number.EPSILON
+    )
       failures.push(
         `${metric}: ${sample.metrics[metric]} ${unit} exceeds 120% of baseline ${reference.metrics[metric]} ${unit}.`,
       );

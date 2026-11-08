@@ -96,6 +96,91 @@ test.each(metrics)(
   },
 );
 
+test.each(
+  metrics.flatMap((metric) =>
+    [
+      { referenceValue: 18, equality: 21.6, regression: 21.600001 },
+      { referenceValue: 1.5, equality: 1.8, regression: 1.800001 },
+    ].map((values) => ({ metric, ...values })),
+  ),
+)(
+  "$metric fractional boundary $referenceValue -> $equality passes through the CLI",
+  ({ metric, referenceValue, equality, regression }) => {
+    const reference = {
+      ...baseline,
+      entries: [
+        {
+          ...measurement,
+          metrics: { ...measurement.metrics, [metric]: referenceValue },
+          binaryLimitBytes: Number.MAX_VALUE,
+        },
+      ],
+    };
+    const current = {
+      ...measurement,
+      metrics: { ...measurement.metrics, [metric]: equality },
+    };
+    const pass = compareCli(reference, current);
+    expect(pass.status).toBe(0);
+    expect(pass.stderr).toBe("");
+    expect(JSON.parse(pass.stdout)).toEqual({ current, failures: [] });
+    expect(checkPerformance(reference, current)).toEqual([]);
+    current.metrics[metric] = regression;
+    expect(checkPerformance(reference, current)).toHaveLength(1);
+    const fail = compareCli(reference, current);
+    expect(fail.status).toBe(1);
+    expect(JSON.parse(fail.stdout).failures[0]).toContain(metric);
+    expect(fail.stderr).toContain(metric);
+  },
+);
+
+test.each(
+  metrics.flatMap((metric) =>
+    [1e308, 1e-300].map((scale) => ({ metric, scale })),
+  ),
+)(
+  "$metric finite scale $scale retains the relative threshold",
+  ({ metric, scale }) => {
+    const reference = {
+      ...baseline,
+      entries: [
+        {
+          ...measurement,
+          metrics: { ...measurement.metrics, [metric]: scale },
+          binaryLimitBytes: Number.MAX_VALUE,
+        },
+      ],
+    };
+    const current = {
+      ...measurement,
+      metrics: { ...measurement.metrics, [metric]: scale * 1.2 },
+    };
+    expect(checkPerformance(reference, current)).toEqual([]);
+    expect(compareCli(reference, current).status).toBe(0);
+    current.metrics[metric] = scale * 1.3;
+    expect(checkPerformance(reference, current)).toHaveLength(1);
+    const result = compareCli(reference, current);
+    expect(result.status).toBe(1);
+    expect(JSON.parse(result.stdout).failures).toHaveLength(1);
+  },
+);
+
+test("the absolute binary cap remains strict at floating-point scale", () => {
+  const reference = {
+    ...baseline,
+    entries: [{ ...measurement, binaryLimitBytes: 21.6 }],
+  };
+  const current = {
+    ...measurement,
+    metrics: { ...measurement.metrics, binaryBytes: 21.6 },
+  };
+  expect(checkPerformance(reference, current)).toEqual([]);
+  current.metrics.binaryBytes += Number.EPSILON * 21.6;
+  expect(current.metrics.binaryBytes).toBeGreaterThan(21.6);
+  expect(checkPerformance(reference, current)).toHaveLength(1);
+  expect(compareCli(reference, current).status).toBe(1);
+});
+
 test("the absolute binary cap is independent of the relative threshold", () => {
   const reference = {
     ...baseline,
