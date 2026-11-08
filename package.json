@@ -9,8 +9,8 @@
   "scripts": {
     "test": "bun test test",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check scripts test",
-    "format": "biome check --write scripts test",
+    "lint": "biome check src scripts test",
+    "format": "biome check --write src scripts test",
     "check": "bun run typecheck && bun run lint && bun run test"
   },
   "devDependencies": {
