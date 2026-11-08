@@ -31,7 +31,7 @@ Kutipan berikut mempertahankan nilai dan keputusan sumber:
 
 ## Batas pekerjaan dan prasyarat eksekusi
 
-Ini rencana implementasi, bukan bukti implementasi. Pada 8 November 2026 hanya paket starter yang ada, tanpa Git repository atau Bun yang bisa dijalankan. Pekerjaan perencanaan hanya menambah dua Markdown ini.
+Ini rencana implementasi, bukan bukti implementasi. Saat rencana pertama ditulis pada 8 November 2026 hanya paket starter yang ada, tanpa Git repository atau Bun yang bisa dijalankan. Snapshot itu bukan status eksekusi terkini; koreksi berikutnya tetap hanya mengubah dua Markdown ini.
 
 Sebelum task kode: runtime Bun dengan versi pin tersedia, starter menjadi repository Git yang benar, spec disetujui dan issue dibuat. Gunakan prosedur setup awal di `README-KIT.md` untuk repo baru; jangan menebak owner, visibilitas atau remote. Pengecualian commit pertama starter ke `main` hanya berlaku pada setup awal tersebut. Setelah itu gunakan branch task. Jika workspace sudah terisolasi, gunakan worktree yang tersedia; jika perlu isolasi baru, ikuti `superpowers:using-git-worktrees` saat eksekusi.
 
@@ -40,6 +40,8 @@ Penambahan zod sudah merupakan pilihan ADR-005, tetapi alasan dependency dan dam
 Setiap blok kode di bawah adalah isi file yang disebut atau perubahan presisi terhadapnya. Jalankan formatter setelah menulis kode. Pada setiap task: jalankan test khusus dahulu, lalu `check`; setelah T09 aktif jalankan `perf` juga pada lingkungan yang punya baseline matching. Tidak menurunkan test, mengubah baseline otomatis, atau meneruskan task berikutnya sebelum PR task sekarang direview sesuai workflow.
 
 Perintah contoh memakai `rtk`, sesuai instruksi workspace. Isi `package.json` dan job GitHub Actions memanggil Bun langsung: RTK bukan dependency produk maupun runner CI.
+
+Step Actions dengan `shell: bun {0}` berjalan dari file sementara di luar checkout. Semua import repository dalam step tersebut memakai `await import(pathToFileURL(resolve(process.cwd(), ...)).href)`; import `node:*` tetap statis. Working directory tetap root checkout. Error import/build/comparator tetap melempar dan regresi tetap mengatur exit 1, tanpa catch yang menelan kegagalan.
 
 ## Peta file dan kontrak
 
@@ -160,21 +162,40 @@ coverage/
 
 **Files:** Create `spikes/boot.ts`, `src/platform/process.ts`, `scripts/measure-perf.ts`, `test/measure-perf.test.ts`, `.github/workflows/baseline.yml`, `docs/perf/measurement.md`. Modify `package.json` lint/format untuk menyertakan `src`.
 
-**Interfaces:** Produces `run(command: string[], env?: NodeJS.ProcessEnv, timeoutMs?: number): string`, `artifactBytes(path: string): number`, `platformKey(runner: string): string`, `measure(command: string[], artifact: string, workload: string, runner: string): Measurement`. `Measurement` memuat schemaVersion, key, bun, workload, metrics dan raw samples, digunakan T08/T09.
+**Interfaces:** Produces `run(command: string[], env?: NodeJS.ProcessEnv, timeoutMs?: number): string`, `artifactBytes(path: string): number`, `platformKey(runner: string, machine?: { host: string; cpuModels: string[]; memoryBytes: number }): string`, `measure(command: string[], artifact: string, workload: string, runner: string): Measurement`. `Measurement` memuat schemaVersion, key, bun, workload, metrics dan raw samples, digunakan T08/T09. Key berbentuk `<os>-<arch>-local-<sha256>` atau `<os>-<arch>-ci-<runner-label>-<sha256>`: lokal menghash host + hardware, CI menghash kelas hardware tanpa hostname ephemeral. Bun/workload tetap dicocokkan terpisah; tidak ada fallback antar-key.
 
 - [ ] **Step 1: Tambahkan test pengukur.** `test/measure-perf.test.ts`:
 
 ```ts
 import { expect, test } from "bun:test";
 import { measure } from "../scripts/measure-perf";
+import { platformKey } from "../src/platform/process";
 
 test("mengukur anak dan mempertahankan raw samples", () => {
-  const result = measure([process.execPath, "spikes/boot.ts"], "spikes/boot.ts", "hello-source-test", "test");
+  const result = measure([process.execPath, "spikes/boot.ts"], "spikes/boot.ts", "hello-source-test", "local");
   expect(result.workload).toBe("hello-source-test");
+  expect(result.key).toBe(platformKey("local"));
   expect(result.samples.versionMs).toHaveLength(15);
   expect(result.samples.idleRssBytes).toHaveLength(5);
   expect(result.metrics.idleRssBytes).toBeGreaterThan(0);
   expect(result.metrics.binaryBytes).toBeGreaterThan(0);
+});
+test("key lokal memisahkan host/hardware tanpa mempublikasikan hostname", () => {
+  const machine = { host: "fixture-host-a", cpuModels: ["CPU B", "CPU A"], memoryBytes: 8192 };
+  const key = platformKey("local", machine);
+  expect(key).toBe(platformKey("local", { ...machine, cpuModels: ["CPU A", "CPU B"] }));
+  expect(key).not.toContain(machine.host);
+  for (const other of [
+    { ...machine, host: "fixture-host-b" },
+    { ...machine, cpuModels: ["CPU C", "CPU A"] },
+    { ...machine, cpuModels: ["CPU A"] },
+    { ...machine, memoryBytes: 16384 },
+  ]) expect(key).not.toBe(platformKey("local", other));
+  const ciKey = platformKey("windows-latest", machine);
+  expect(ciKey).toBe(platformKey("windows-latest", { ...machine, host: "ephemeral-runner-b" }));
+  expect(ciKey).not.toBe(key);
+  expect(ciKey).not.toBe(platformKey("windows-latest", { ...machine, memoryBytes: 16384 }));
+  expect(ciKey).not.toBe(platformKey("ubuntu-latest", machine));
 });
 ```
 
@@ -183,7 +204,9 @@ test("mengukur anak dan mempertahankan raw samples", () => {
 
 ```ts
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { statSync } from "node:fs";
+import { cpus, hostname, totalmem } from "node:os";
 
 export function run(command: string[], env: NodeJS.ProcessEnv = process.env, timeoutMs = 10_000): string {
   const result = spawnSync(command[0], command.slice(1), {
@@ -197,7 +220,17 @@ export function run(command: string[], env: NodeJS.ProcessEnv = process.env, tim
 }
 
 export const artifactBytes = (path: string): number => statSync(path).size;
-export const platformKey = (runner: string): string => `${process.platform}-${process.arch}-${runner}`;
+export function platformKey(runner: string, machine = {
+  host: hostname(), cpuModels: cpus().map((cpu) => cpu.model), memoryBytes: totalmem(),
+}): string {
+  if (!["local", "ubuntu-latest", "windows-latest", "macos-latest"].includes(runner)) throw new Error("Runner perf tidak dikenal.");
+  if (!machine.host || !machine.cpuModels.length || machine.cpuModels.some((model) => !model.trim()) ||
+    !Number.isFinite(machine.memoryBytes) || machine.memoryBytes <= 0) throw new Error("Identitas mesin perf tidak lengkap.");
+  const hardware = { cpuModels: machine.cpuModels.map((model) => model.trim()).sort(), memoryBytes: machine.memoryBytes };
+  const identity = runner === "local" ? { host: machine.host, ...hardware } : hardware;
+  const fingerprint = createHash("sha256").update(JSON.stringify(identity)).digest("hex");
+  return `${process.platform}-${process.arch}-${runner === "local" ? "local" : `ci-${runner}`}-${fingerprint}`;
+}
 ```
 
 `spikes/boot.ts`:
@@ -263,6 +296,7 @@ if (import.meta.main) {
 ```yaml
 name: baseline
 on:
+  pull_request:
   workflow_dispatch:
 jobs:
   measure:
@@ -284,13 +318,14 @@ jobs:
         run: |
           import { mkdir } from "node:fs/promises";
           import { join, resolve } from "node:path";
-          import { measure } from "./scripts/measure-perf.ts";
-          import { run } from "./src/platform/process.ts";
+          import { pathToFileURL } from "node:url";
+          const { measure } = await import(pathToFileURL(resolve(process.cwd(), "scripts/measure-perf.ts")).href);
+          const { platformKey, run } = await import(pathToFileURL(resolve(process.cwd(), "src/platform/process.ts")).href);
           await mkdir("dist", { recursive: true });
           const binary = resolve(join("dist", process.platform === "win32" ? "hello.exe" : "hello"));
           run([process.execPath, "build", "--compile", "spikes/boot.ts", "--outfile", binary], process.env, 120_000);
           await Bun.write("dist/hello-measurement.json", JSON.stringify(measure([binary], binary, "hello-v1", process.env.LIZZY_PERF_RUNNER), null, 2));
-          await Bun.write("dist/environment.json", JSON.stringify({ bun: Bun.version, os: process.platform, arch: process.arch, image: process.env.ImageOS, imageVersion: process.env.ImageVersion, commit: process.env.GITHUB_SHA }, null, 2));
+          await Bun.write("dist/environment.json", JSON.stringify({ key: platformKey(process.env.LIZZY_PERF_RUNNER), runner: process.env.LIZZY_PERF_RUNNER, bun: Bun.version, os: process.platform, arch: process.arch, image: process.env.ImageOS, imageVersion: process.env.ImageVersion, commit: process.env.GITHUB_SHA }, null, 2));
       - uses: actions/upload-artifact@v4
         with:
           name: baseline-${{ matrix.os }}
@@ -299,14 +334,16 @@ jobs:
             dist/environment.json
 ```
 
-- [ ] **Step 6: Verifikasi dan rekam metode.** `rtk bun test test/measure-perf.test.ts`, `rtk bun run check` → exit 0. Jalankan workflow setelah branch tersedia; simpan URL run dan artifacts. Isi `docs/perf/measurement.md` dengan metode: 3 warmup + 15 subprocess startup, median; 5 subprocess idle, sampling anak setelah 200 ms; byte artefak; exact Bun, OS/arch, runner/image, commit. Ini startup proses baru dengan cache OS hangat, bukan pengukuran boot mesin dingin atau latensi TUI. Batas binary diputuskan di T09 setelah aplikasi diukur juga.
+- [ ] **Step 6: Verifikasi dan rekam metode.** `rtk bun test test/measure-perf.test.ts`, `rtk bun run check` → exit 0. Buka PR T02 untuk memicu `pull_request`; kumpulkan tiga artifact native sebelum PR dinyatakan selesai atau user merge. `workflow_dispatch` baru tersedia setelah file workflow ada di default branch; jangan mensyaratkan merge untuk memperoleh bukti pertama. Pertahankan kedua trigger ketika T08 memperluas workflow. Simpan URL run/artifacts dan SHA checkout yang diukur (`GITHUB_SHA` pada PR adalah merge ref, bukan head branch). Isi `docs/perf/measurement.md` dengan metode: 3 warmup + 15 subprocess startup, median; 5 subprocess idle, sampling anak setelah 200 ms; byte artefak; exact Bun, OS/arch, key, runner/image, commit. Ini startup proses baru dengan cache OS hangat, bukan pengukuran boot mesin dingin atau latensi TUI. Batas binary diputuskan di T09 setelah aplikasi diukur juga.
+
+Dokumentasikan kelas hardware sebagai daftar model CPU per logical CPU (diurutkan, jumlah core tetap terwakili) dan total RAM dari `node:os`; frekuensi CPU sesaat tidak masuk hash. CI memakai label GitHub-hosted dari matriks plus hash hardware, tanpa hostname runner ephemeral; image revision tetap metadata audit. Lokal memakai hash host + hardware dan tidak menulis hostname mentah ke measurement, environment artifact, atau laporan publik. Mesin lokal berbeda, penggantian CPU/jumlah core/RAM, OS/arch atau pin Bun membutuhkan baseline matching yang direview; key lama seperti `win32-x64-local` tidak valid. Jangan mengubah threshold untuk mengatasi pergantian kelas runner.
 - [ ] **Step 7: Commit.** `perf(f00): ukur baseline boot native [F00-T02]`, body `Refs #` dengan issue aktual. Tidak mengisi `baseline.json` dengan angka dari mesin lain atau angka contoh.
 
 ## Task 3: F00-T03 — Spike renderer
 
 **Files:** Create `spikes/renderer/package.json`, `spikes/renderer/bun.lock`, `spikes/renderer/compare.ts`, `spikes/renderer/compare.test.ts`, `spikes/renderer/minimal.ts`, `spikes/renderer/pi.ts`, `spikes/renderer/minimal-entry.ts`, `spikes/renderer/pi-entry.ts`, `docs/perf/renderer.md`. Modify `docs/adr/003-renderer-tui.md:22`.
 
-**Interfaces:** Consumes API pi-tui yang diverifikasi saat spike; produces dua backend `runDemo(kind: "pi" | "minimal"): Promise<void>`, fixture identik, hasil ukuran/latensi dan keputusan ADR. Tidak mengekspor backend ke `src/`.
+**Interfaces:** Consumes API pi-tui yang diverifikasi saat spike; produces dispatcher `runDemo(kind: "pi" | "minimal"): Promise<void>` dan, setelah pemisahan Step 6, `runDemo(): Promise<void>` dari masing-masing `minimal.ts`/`pi.ts`, fixture identik, hasil ukuran/latensi dan keputusan ADR. Dua entry final menghasilkan `dist/minimal-spike[.exe]` dan `dist/pi-spike[.exe]`; laporan memisahkan source dan compiled pada Windows/Linux. Tidak mengekspor backend ke `src/`.
 
 - [ ] **Step 1: Isolasi paket percobaan.** `spikes/renderer/package.json`:
 
@@ -320,6 +357,7 @@ Dari direktori itu jalankan `rtk bun add --dev --exact @earendil-works/pi-tui@1.
 
 ```ts
 import { expect, test } from "bun:test";
+import { matchesKey } from "@earendil-works/pi-tui";
 import { diffFrame, containsEcho } from "./compare";
 test("hanya menggambar baris berubah dalam frame tersinkron", () => {
   expect(diffFrame(["a", "b"], ["a", "c"])).toBe("\x1b[?2026h\x1b[2;1H\x1b[2Kc\x1b[?2026l");
@@ -329,6 +367,17 @@ test("hanya menggambar baris berubah dalam frame tersinkron", () => {
 test("write streaming tidak dianggap echo ketikan", () => {
   expect(containsEcho("stream token", "abc")).toBe(false);
   expect(containsEcho("\x1b[32m> abc\x1b[0m", "abc")).toBe(true);
+});
+test.each([
+  ["\x03", "ctrl+c"], ["\x1b[99;5u", "ctrl+c"], ["\x1b[27;5;99~", "ctrl+c"],
+  ["\x1b", "escape"], ["\x1b[27u", "escape"],
+] as const)("kontrol pi %j dikenali sebagai %s", (data, key) => {
+  expect(matchesKey(data, key)).toBe(true);
+});
+test("arrow dan huruf biasa tidak menghentikan pi", () => {
+  for (const data of ["\x1b[A", "c"]) {
+    expect(matchesKey(data, "ctrl+c") || matchesKey(data, "escape")).toBe(false);
+  }
 });
 ```
 
@@ -346,7 +395,7 @@ export function diffFrame(previous: string[], next: string[]): string {
 
 export async function runDemo(kind: "pi" | "minimal"): Promise<void> {
   if (!process.stdin.isTTY || !process.stdout.isTTY) throw new Error("Jalankan spike di terminal interaktif native.");
-  const { Input, ProcessTerminal, Text, TuiMainScreen } = await import("@earendil-works/pi-tui");
+  const { Input, ProcessTerminal, Text, TuiMainScreen, matchesKey } = await import("@earendil-works/pi-tui");
   let transcript = "";
   let typed = "";
   let previous: string[] = [];
@@ -398,7 +447,7 @@ export async function runDemo(kind: "pi" | "minimal"): Promise<void> {
     if (tui) {
       tui.addChild(text); tui.addChild(input); tui.setFocus(input);
       input.onSubmit = (value: string) => { transcript += ` ${value}`; input.setValue(""); paint(); };
-      tui.addInputListener((data: string) => { if (data === "\x03" || data === "\x1b") { stop(); return { consume: true }; } return undefined; });
+      tui.addInputListener((data: string) => { if (matchesKey(data, "ctrl+c") || matchesKey(data, "escape")) { stop(); return { consume: true }; } return undefined; });
       tui.start();
     } else {
       process.stdout.write("\x1b[?1049h\x1b[2J");
@@ -422,9 +471,49 @@ if (import.meta.main) {
 
 Ini fixture ASCII kecil, bukan editor produksi. Observer yang sama mengukur **raw-input-ke-write-yang-memuat-echo**, termasuk buffering input; paint token streaming saja tidak dihitung. Hasil bukan waktu cat fisik layar. Gunakan terminal native 120 kolom, masukkan satu huruf kecil per event, submit setelah 50 huruf dan kumpulkan minimal 100 sampel per backend; `unanswered` harus nol. Gerbang PTY produksi <16 ms p95 tetap Fase 9. Jika optional helper pi gagal dalam compiled Bun, catat sebagai hasil perbandingan, jangan menganggap Node compatibility otomatis berlaku untuk Bun.
 
+`ProcessTerminal` menegosiasikan Kitty/modifyOtherKeys; kontrol pi harus melalui `matchesKey` dan jalur `stop()` yang sama agar `tui.stop()`, timer, listener dan stdout observer dibersihkan. Backend minimal tidak menegosiasikan protokol: byte 0x03/0x1b menghentikan, CR submit dan DEL backspace; escape sequence lain tidak termasuk workload ASCII minimal. Pertahankan perilaku dan cleanup ini ketika backend dipisah.
+
 - [ ] **Step 5: Uji dan ukur kedua backend.** Test di atas harus lulus. Dari root: `rtk bun spikes/renderer/compare.ts minimal`, lalu `rtk bun spikes/renderer/compare.ts pi`; ketik, submit, stream, resize terminal dan keluar dengan Esc/Ctrl+C. Catat platform, terminal, ukuran viewport, perilaku restore terminal dan hasil resize. Kegagalan resize/input adalah data spike, bukan fitur yang disembunyikan.
-- [ ] **Step 6: Ukur bundle secara terpisah.** Build dua entry yang hanya mengimpor backend masing-masing diperlukan agar ukuran library tidak ikut membengkakkan hasil minimal. Sebelum pengukuran pisahkan fungsi backend dari `compare.ts` menjadi `minimal.ts` dan `pi.ts`, masing-masing mengekspor `runDemo(): Promise<void>`, pertahankan `diffFrame` di `compare.ts`, dan ubah dispatcher menjadi dynamic import berdasarkan kind. Buat entry `spikes/renderer/minimal-entry.ts` dengan `import { runDemo } from "./minimal"; await runDemo();` serta `pi-entry.ts` dengan import `./pi`. Jalankan `rtk bun build spikes/renderer/minimal-entry.ts --target=bun --outfile dist/minimal-spike.js` dan pasangan `pi-entry.ts` → `dist/pi-spike.js`. Ukur byte `Bun.file(...).size`, lalu compiled binary kedua entry di platform yang sama. Semua file tambahan ini hanya bagian paket spike; masukkan ke daftar file PR.
-- [ ] **Step 7: Tulis hasil dan keputusan.** `docs/perf/renderer.md` berisi versi paket/license, kedua build command dan byte, test terminal Windows/Linux, metrik latensi dengan definisinya, kekurangan teramati, pilihan dan alasan. Perbarui hanya bagian hasil spike ADR-003. Jika tidak ada bukti cukup untuk memilih, catat hasil parsial dan status keputusan belum diterima; task belum memenuhi acceptance, jangan memindahkan TUI produksi ke F0 untuk menutupnya.
+- [ ] **Step 6: Ukur dan jalankan entry final secara terpisah.** Build dua entry yang hanya mengimpor backend masing-masing diperlukan agar ukuran library tidak ikut membengkakkan hasil minimal. Sebelum pengukuran pisahkan fungsi backend dari `compare.ts` menjadi `minimal.ts` dan `pi.ts`, masing-masing mengekspor `runDemo(): Promise<void>`, pertahankan `diffFrame`/`containsEcho` di `compare.ts`, dan ubah dispatcher menjadi dynamic import berdasarkan kind. Pertahankan observer/cleanup kedua backend dan `matchesKey` di backend pi. Buat entry `spikes/renderer/minimal-entry.ts` dengan `import { runDemo } from "./minimal"; await runDemo();` serta `pi-entry.ts` dengan `import { runDemo } from "./pi"; await runDemo();`. Semua file ini hanya bagian paket spike.
+
+Setelah pemisahan, jalankan test dan build bundle dari root di masing-masing OS native:
+
+```text
+rtk bun test spikes/renderer/compare.test.ts
+rtk bun build spikes/renderer/minimal-entry.ts --target=bun --outfile dist/minimal-spike.js
+rtk bun build spikes/renderer/pi-entry.ts --target=bun --outfile dist/pi-spike.js
+```
+
+Windows (terminal native, Bun pin yang sama):
+
+```powershell
+rtk bun build spikes/renderer/minimal-entry.ts --compile --outfile dist/minimal-spike.exe
+rtk bun build spikes/renderer/pi-entry.ts --compile --outfile dist/pi-spike.exe
+rtk proxy bun spikes/renderer/minimal-entry.ts
+rtk proxy bun spikes/renderer/pi-entry.ts
+rtk proxy .\dist\minimal-spike.exe
+rtk proxy .\dist\pi-spike.exe
+```
+
+Linux (terminal native, Bun pin yang sama):
+
+```bash
+rtk bun build spikes/renderer/minimal-entry.ts --compile --outfile dist/minimal-spike
+rtk bun build spikes/renderer/pi-entry.ts --compile --outfile dist/pi-spike
+rtk proxy bun spikes/renderer/minimal-entry.ts
+rtk proxy bun spikes/renderer/pi-entry.ts
+rtk proxy ./dist/minimal-spike
+rtk proxy ./dist/pi-spike
+```
+
+Ukur byte keempat artefak di masing-masing OS:
+
+```text
+rtk bun -e 'import { statSync } from "node:fs"; const suffix = process.platform === "win32" ? ".exe" : ""; for (const name of ["minimal", "pi"]) for (const extension of [".js", suffix]) { const path = `dist/${name}-spike${extension}`; console.log(JSON.stringify({ path, bytes: statSync(path).size })); }'
+```
+
+Untuk setiap kombinasi OS × backend × mode (`source`, `compiled`), ulangi workload yang sama pada terminal/viewport yang sama: mulai 120 kolom; tunggu stream token; ketik 50 huruf kecil satu per event, Enter, lalu 50 huruf dan Enter; resize 120 → 80 → 120 sambil stream berjalan; keluar dengan Escape. Ulangi sesi identik dan keluar dengan Ctrl+C. Catat exit code setelah setiap command, minimal 100 sampel, `samplesMs`, `inputToWriteP95Ms`, `unanswered`, hasil submit/resize dan restore cursor/raw mode/keyboard mode. Jangan redirect stdout atau memakai pipe yang menghilangkan TTY. Simpan JSON stderr serta catatan manual per sesi. Build sukses dan source sukses belum membuktikan executable compiled dapat memuat helper native atau memulihkan terminal.
+- [ ] **Step 7: Tulis hasil dan keputusan.** `docs/perf/renderer.md` berisi commit/Bun/package/license, OS/arch/terminal/viewport/protokol keyboard, command build/run persis, path dan byte bundle/binary, serta tabel delapan kombinasi OS × backend × mode dengan kedua exit control dicatat terpisah. Sertakan exit/error startup/helper native, hasil input/stream/resize/restore dan raw samples/latensi dengan definisinya; source tidak boleh mengisi kolom compiled. Kegagalan compiled merupakan hasil perbandingan dan harus memengaruhi keputusan. Perbarui hanya bagian hasil spike ADR-003. Jika executable belum benar-benar dijalankan pada salah satu OS atau bukti belum cukup untuk memilih, catat **belum terbukti**; task belum memenuhi acceptance. TUI produksi tetap Fase 9.
 - [ ] **Step 8: Commit.** `docs(f00): hasil spike renderer [F00-T03]`, `Refs #` nomor issue aktual; PR diberi `spec-change` bila keputusan ADR berubah.
 
 ## Task 4: F00-T04 — CLI ringan dan build
@@ -518,8 +607,9 @@ Build menggunakan timeout 120 detik, probe tetap 10 detik. Tambahkan script `"bu
         run: |
           import assert from "node:assert/strict";
           import { join, resolve } from "node:path";
-          import { version } from "./package.json";
-          import { run } from "./src/platform/process.ts";
+          import { pathToFileURL } from "node:url";
+          const { default: { version } } = await import(pathToFileURL(resolve(process.cwd(), "package.json")).href);
+          const { run } = await import(pathToFileURL(resolve(process.cwd(), "src/platform/process.ts")).href);
           const binary = resolve(join("dist", process.platform === "win32" ? "agent.exe" : "agent"));
           assert.match(run([binary, "--help"]), /Pemakaian/);
           assert.equal(run([binary, "--version"]).trim(), version);
@@ -528,7 +618,7 @@ Build menggunakan timeout 120 detik, probe tetap 10 detik. Tambahkan script `"bu
 
 ## Task 5: F00-T05 — Config JSONC
 
-**Files:** Create `src/config.ts`, `src/platform/config.ts`, `test/config.test.ts`. Modify `src/app.ts`, `package.json`, `bun.lock`.
+**Files:** Create `src/config.ts`, `src/platform/config.ts`, `test/config.test.ts`. Modify `src/app.ts`, `test/cli.test.ts`, `package.json`, `bun.lock`.
 
 **Interfaces:** Produces `parseConfig(text: string, label: string): ConfigLayer`, `mergeConfig(global: ConfigLayer, project: ConfigLayer): Config`, `loadConfig(cwd?: string, home?: string): Promise<Config>`. `Config = { version: 1; shell: { bash?: string } }`; `ConfigLayer` memiliki kedua field opsional. Lokasi global `~/.lizzy/config.jsonc`, proyek `<cwd>/.lizzy/config.jsonc` tanpa pencarian ancestor F0.
 
@@ -870,16 +960,18 @@ Chunk server berukuran kecil membantu latihan parser berikutnya, tetapi TCP dapa
 
 **Files:** Create `scripts/perf.ts`, `test/perf.test.ts`. Modify `src/platform/process.ts`, `src/app.ts`, `package.json`, `.github/workflows/baseline.yml`.
 
-**Interfaces:** Consumes `Measurement` T02 dan startup config/shell T06. Produces `checkPerformance(baseline: unknown, current: unknown): string[]`, schema pengukuran runtime, `bun run perf`. Error validasi/mismatch melempar; daftar regresi tidak kosong berarti exit 1. Workload `agent-f00-v1` berbeda dari `hello-v1`.
+**Interfaces:** Consumes `Measurement`/`platformKey` T02 dan startup config/shell T06. Produces `checkPerformance(baseline: unknown, current: unknown): string[]`, `measurementSchema`, `baselineSchema`, `bun run perf`. Schema memvalidasi format key T02; comparator menuntut key, Bun dan workload sama persis. Error validasi/mismatch melempar; daftar regresi tidak kosong berarti exit 1. Workload `agent-f00-v1` berbeda dari `hello-v1`.
 
 - [ ] **Step 1: Tulis test ambang dan input.** `test/perf.test.ts`:
 
 ```ts
 import { expect, test } from "bun:test";
 import { checkPerformance } from "../scripts/perf";
+import { platformKey } from "../src/platform/process";
 
+const machine = { host: "fixture-host-a", cpuModels: ["fixture CPU", "fixture CPU"], memoryBytes: 8192 };
 const measurement = {
-  schemaVersion: 1, key: "win32-x64-test", bun: "1.4.2", workload: "agent-f00-v1",
+  schemaVersion: 1, key: platformKey("local", machine), bun: "1.4.2", workload: "agent-f00-v1",
   metrics: { versionMs: 100, idleRssBytes: 100, binaryBytes: 100 },
   samples: { versionMs: [100], idleRssBytes: [100] },
 };
@@ -895,6 +987,19 @@ test("baseline tidak matching dan input invalid tidak menjadi hijau", () => {
   expect(() => checkPerformance(baseline, { ...measurement, metrics: { ...measurement.metrics, versionMs: Number.NaN } })).toThrow();
   expect(() => checkPerformance({ schemaVersion: 1, entries: [{ ...measurement, metrics: { ...measurement.metrics, binaryBytes: 0 }, binaryLimitBytes: 120 }] }, measurement)).toThrow();
 });
+test("host, hardware, kelas runner, OS dan arch berbeda ditolak", () => {
+  const keys = [
+    platformKey("local", { ...machine, host: "fixture-host-b" }),
+    platformKey("local", { ...machine, cpuModels: ["other CPU", "other CPU"] }),
+    platformKey("local", { ...machine, cpuModels: ["fixture CPU"] }),
+    platformKey("local", { ...machine, memoryBytes: 16384 }),
+    platformKey("windows-latest", machine),
+    measurement.key.replace(/^[^-]+/, process.platform === "win32" ? "linux" : "win32"),
+    measurement.key.replace(`-${process.arch}-`, process.arch === "x64" ? "-arm64-" : "-x64-"),
+    "win32-x64-local",
+  ];
+  for (const key of keys) expect(() => checkPerformance(baseline, { ...measurement, key })).toThrow();
+});
 ```
 
 Angka 100/120/121 hanya fixture tes matematika, tidak pernah disalin menjadi baseline real.
@@ -909,7 +1014,9 @@ import { measure } from "./measure-perf";
 
 const positive = z.number().finite().positive();
 export const measurementSchema = z.strictObject({
-  schemaVersion: z.literal(1), key: z.string().min(1), bun: z.string().min(1), workload: z.string().min(1),
+  schemaVersion: z.literal(1),
+  key: z.string().regex(/^(linux|win32|darwin)-(x64|arm64)-(local|ci-(ubuntu-latest|windows-latest|macos-latest))-[a-f0-9]{64}$/),
+  bun: z.string().min(1), workload: z.string().min(1),
   metrics: z.strictObject({ versionMs: positive, idleRssBytes: positive, binaryBytes: positive }),
   samples: z.strictObject({ versionMs: z.array(positive).min(1), idleRssBytes: z.array(positive).min(1) }),
 });
@@ -967,16 +1074,21 @@ if (await reportIdleProbe()) return 0;
 
 Probe hanya mengamati startup skeleton; belum TUI kosong Fase 9. Jangan menamai hasilnya idle TUI. Tambahkan `"perf": "bun scripts/perf.ts"` ke scripts package.
 
-- [ ] **Step 5: Perluas workflow pengumpulan.** Tambahkan `bun run build` setelah compile hello, kemudian step `shell: bun {0}` sebelum upload:
+- [ ] **Step 5: Perluas workflow pengumpulan.** Pertahankan `pull_request` dan `workflow_dispatch` T02. Tambahkan step berikut setelah compile hello dan sebelum upload:
 
-```ts
-import { join, resolve } from "node:path";
-import { measure } from "./scripts/measure-perf.ts";
-const binary = resolve(join("dist", process.platform === "win32" ? "agent.exe" : "agent"));
-await Bun.write("dist/agent-measurement.json", JSON.stringify(measure([binary], binary, "agent-f00-v1", process.env.LIZZY_PERF_RUNNER), null, 2));
+```yaml
+      - run: bun run build
+      - name: Measure agent
+        shell: bun {0}
+        run: |
+          import { join, resolve } from "node:path";
+          import { pathToFileURL } from "node:url";
+          const { measure } = await import(pathToFileURL(resolve(process.cwd(), "scripts/measure-perf.ts")).href);
+          const binary = resolve(join("dist", process.platform === "win32" ? "agent.exe" : "agent"));
+          await Bun.write("dist/agent-measurement.json", JSON.stringify(measure([binary], binary, "agent-f00-v1", process.env.LIZZY_PERF_RUNNER), null, 2));
 ```
 
-Workflow dijalankan pada account runner bersih, tanpa config `.lizzy` pribadi. Rekam identitas image dan commit dalam artifact T02. Key membedakan OS/arch dan kelas runner; image revision disimpan sebagai metadata untuk audit, perubahan kelas hardware atau pin Bun memerlukan baseline baru.
+Workflow dijalankan pada account runner bersih, tanpa config `.lizzy` pribadi. Rekam key, label runner, image dan commit dalam artifact T02. Hello dan agent dari job yang sama harus memiliki key/Bun yang sama; perubahan kelas hardware atau pin Bun memerlukan baseline baru, bukan fallback atau threshold baru.
 - [ ] **Step 6: Green dan negative CLI.** `rtk bun test test/perf.test.ts test/measure-perf.test.ts`, `rtk bun run check`, `rtk bun run build` → exit 0. `rtk bun run perf` saat baseline belum ada wajib exit 1 dengan diagnostic file missing; jangan menambahkan skip agar hijau.
 - [ ] **Step 7: Commit.** `perf(f00): gate tiga metrik terhadap baseline [F00-T08]`, body `Refs #` issue aktual. Gerbang CI baru diwajibkan setelah data T09 tersedia dalam PR yang sama dengan pengaktifannya.
 
@@ -984,16 +1096,34 @@ Workflow dijalankan pada account runner bersih, tanpa config `.lizzy` pribadi. R
 
 **Files:** Create `docs/perf/baseline.json`, `scripts/assemble-baseline.ts`. Modify `test/perf.test.ts`, `docs/adr/006-gerbang-performa.md:22`, `docs/perf/measurement.md`, `.github/workflows/ci.yml`, `scripts/setup-github.sh:77`, `docs/WORKFLOW.md:67`.
 
-**Interfaces:** Consumes artifacts `hello-measurement.json`/`agent-measurement.json` pada tiga OS dan comparator T08. Produces accepted baseline enam entry minimum, binaryLimitBytes berdasarkan pengukuran, dan jobs `perf (ubuntu-latest)`/`perf (windows-latest)`.
+**Interfaces:** Consumes artifacts `hello-measurement.json`/`agent-measurement.json` dengan key T02 dan schema/comparator T08. Produces accepted baseline enam entry minimum: satu pasangan hello/agent dengan key/Bun identik per OS/kelas runner CI, ditambah pasangan lokal bila diperlukan; binaryLimitBytes berdasarkan pengukuran, dan jobs `perf (ubuntu-latest)`/`perf (windows-latest)`.
 
-- [ ] **Step 1: Kumpulkan data aktual.** Jalankan workflow `baseline` pada commit aplikasi T08; unduh artifacts Linux/Windows/macOS. Verifikasi `environment.json` cocok dengan commit dan Bun pin. Cross-compile saja tidak cukup. Untuk `bun run perf` lokal, kumpulkan juga pasangan hello/agent pada mesin lokal dan simpan entry dengan suffix `local`; jangan memalsukan `LIZZY_PERF_RUNNER` agar mesin lokal dianggap runner CI.
-- [ ] **Step 2a: Tulis test input assembler.** Tambahkan import `spawnSync` dari `node:child_process` di `test/perf.test.ts` dan test berikut:
+- [ ] **Step 1: Kumpulkan data aktual.** Jalankan workflow `baseline` pada commit aplikasi T08; unduh artifacts Linux/Windows/macOS. Verifikasi `environment.json` cocok dengan SHA checkout, key kedua measurement dan Bun pin. Cross-compile saja tidak cukup. Untuk `bun run perf` lokal, kumpulkan juga pasangan hello/agent pada mesin lokal dengan `LIZZY_PERF_RUNNER` unset atau `local`; key otomatis memiliki `local-<sha256 host+hardware>`. Jangan memalsukan runner CI atau menyalin key mesin lain. Hash lokal tetap pseudonim; hostname mentah tidak dipublikasikan.
+- [ ] **Step 2a: Tulis test input assembler.** Tambahkan import `spawnSync` dari `node:child_process`, `mkdtemp`, `mkdir`, `rm`, `writeFile` dari `node:fs/promises`, `tmpdir` dari `node:os`, dan `join`, `resolve` dari `node:path` di `test/perf.test.ts`, lalu test berikut:
 
 ```ts
 test("assembler menolak baseline tanpa enam pengukuran", () => {
   const result = spawnSync(process.execPath, ["scripts/assemble-baseline.ts"], { encoding: "utf8", windowsHide: true });
   expect(result.status).not.toBe(0);
   expect(result.stderr).toContain("enam file measurement native");
+});
+test.each([false, true])("assembler memeriksa kelas hardware pasangan (mismatch=%s)", async (mismatch) => {
+  const root = await mkdtemp(join(tmpdir(), "lizzy-baseline-"));
+  try {
+    await mkdir(join(root, "docs", "perf"), { recursive: true });
+    const files: string[] = [];
+    for (const [os, runner] of [["linux", "ubuntu-latest"], ["win32", "windows-latest"], ["darwin", "macos-latest"]]) {
+      for (const workload of ["hello-v1", "agent-f00-v1"]) {
+        const hash = mismatch && os === "win32" && workload === "agent-f00-v1" ? "b" : "a";
+        const file = join(root, `${os}-${workload}.json`);
+        await writeFile(file, JSON.stringify({ ...measurement, key: `${os}-x64-ci-${runner}-${hash.repeat(64)}`, workload }));
+        files.push(file);
+      }
+    }
+    const result = spawnSync(process.execPath, [resolve("scripts/assemble-baseline.ts"), ...files], { cwd: root, encoding: "utf8", windowsHide: true });
+    expect(result.status).toBe(mismatch ? 1 : 0);
+    if (mismatch) expect(result.stderr).toContain("key hello/agent berbeda");
+  } finally { await rm(root, { recursive: true, force: true }); }
 });
 ```
 
@@ -1011,10 +1141,14 @@ const entries = inputs.map((file) => {
   const measured = measurementSchema.parse(JSON.parse(readFileSync(file, "utf8")));
   return { ...measured, binaryLimitBytes: Math.ceil(measured.metrics.binaryBytes * 1.2) };
 });
-for (const runner of ["ubuntu-latest", "windows-latest", "macos-latest"]) {
+for (const [os, runner] of [["linux", "ubuntu-latest"], ["win32", "windows-latest"], ["darwin", "macos-latest"]]) {
+  const pair = [];
   for (const workload of ["hello-v1", "agent-f00-v1"]) {
-    if (entries.filter((entry) => entry.key.endsWith(`-${runner}`) && entry.workload === workload && entry.bun === "1.4.2").length !== 1) throw new Error(`Butuh satu measurement ${runner}/${workload}/Bun 1.4.2`);
+    const matches = entries.filter((entry) => entry.key.startsWith(`${os}-`) && entry.key.includes(`-ci-${runner}-`) && entry.workload === workload && entry.bun === "1.4.2");
+    if (matches.length !== 1) throw new Error(`Butuh satu measurement ${runner}/${workload}/Bun 1.4.2`);
+    pair.push(matches[0]);
   }
+  if (pair[0].key !== pair[1].key) throw new Error(`${runner}: key hello/agent berbeda; ukur ulang pada kelas hardware yang sama.`);
 }
 const unique = new Set(entries.map((entry) => `${entry.key}/${entry.bun}/${entry.workload}`));
 if (unique.size !== entries.length) throw new Error("Measurement duplikat.");
@@ -1048,8 +1182,9 @@ Panggil skrip dengan path nyata keenam artifact yang diunduh, ditambah dua measu
         run: |
           import { mkdirSync, writeFileSync } from "node:fs";
           import { join, resolve } from "node:path";
-          import { measure } from "./scripts/measure-perf.ts";
-          import { checkPerformance } from "./scripts/perf.ts";
+          import { pathToFileURL } from "node:url";
+          const { measure } = await import(pathToFileURL(resolve(process.cwd(), "scripts/measure-perf.ts")).href);
+          const { checkPerformance } = await import(pathToFileURL(resolve(process.cwd(), "scripts/perf.ts")).href);
           const binary = resolve(join("dist", process.platform === "win32" ? "agent.exe" : "agent"));
           const current = measure([binary], binary, "agent-f00-v1", process.env.LIZZY_PERF_RUNNER);
           const failures = checkPerformance(await Bun.file("docs/perf/baseline.json").json(), current);
@@ -1123,7 +1258,8 @@ Config kosong valid. Contoh Git Bash Windows:
 
 Lihat `docs/phases/fase-00.md` untuk scope dan acceptance, `docs/WORKFLOW.md`
 untuk cara kontribusi, serta `docs/perf/measurement.md` untuk lingkungan
-baseline yang dapat dibandingkan. Pengukuran lokal memerlukan baseline lokal.
+baseline yang dapat dibandingkan. Pengukuran lokal memerlukan baseline dengan
+hash host/hardware, OS/arch, Bun dan workload yang sama; mesin lain ditolak.
 ```
 
 - [ ] **Step 2: Update README-KIT dengan hasil setup.** Pertahankan dokumentasi setup awal, tambahkan tautan README dan fase00; tandai empat status check final. Jangan menghapus aturan starter atau menulis bahwa setup GitHub sudah dilakukan bila belum dibuktikan.
@@ -1161,13 +1297,18 @@ Ditambah binary smoke Windows/Linux, results native macOS, dan kedua run CI inje
 - Context7 `/oven-sh/bun`: [JSONC tests resmi](https://github.com/oven-sh/bun/blob/main/test/js/bun/jsonc/jsonc.test.ts), [HTTP server](https://github.com/oven-sh/bun/blob/main/docs/runtime/http/server.mdx): `Bun.JSONC.parse`, loopback/port 0, `server.stop(true)`.
 - Context7 `/colinhacks/zod`: [API/schema](https://github.com/colinhacks/zod/blob/main/packages/docs/content/api.mdx), [error formatting](https://github.com/colinhacks/zod/blob/main/packages/docs/content/error-formatting.mdx): strict schema, safeParse, issue.path/code. Jangan log input Zod atau pesan parser mentah.
 - Context7 `/earendil-works/pi`: [TUI README](https://github.com/earendil-works/pi/blob/main/packages/tui/README.md), [TUI guide](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/tui.md), [license](https://github.com/earendil-works/pi/blob/main/LICENSE). Paket dan API harus cocok dengan versi yang dipin pada spike; library belum diinstal oleh penyusunan plan.
+- Koreksi kontrol pi diperiksa lewat Context7 `/earendil-works/pi` dan pinned source [`terminal.ts`](https://github.com/earendil-works/pi/blob/e49b1495045f06643a7cc4c93330fabc2ab37ce4/packages/tui/src/terminal.ts), [`keys.ts`](https://github.com/earendil-works/pi/blob/e49b1495045f06643a7cc4c93330fabc2ab37ce4/packages/tui/src/keys.ts), [`index.ts`](https://github.com/earendil-works/pi/blob/e49b1495045f06643a7cc4c93330fabc2ab37ce4/packages/tui/src/index.ts): negosiasi Kitty/modifyOtherKeys, ekspor `matchesKey`, serta restore protokol/raw mode saat stop.
+- Context7 `/websites/github_en_actions`: [events that trigger workflows](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows): `workflow_dispatch` membutuhkan file di default branch; `pull_request` dapat mengumpulkan bukti sebelum merge dan memakai SHA merge ref.
 
 ## Status verifikasi rencana
 
-Dokumen ditinjau terhadap Fase 0, enam ADR, workflow, format parser issue dan temuan roadmap. Kode di dalam Markdown belum dieksekusi: Bun tidak tersedia dalam environment perencanaan. Bukti runtime, Windows/Linux/macOS, benchmark, dan keputusan renderer tetap merupakan keluaran task yang harus benar-benar dijalankan.
+Dokumen ditinjau terhadap Fase 0, enam ADR, workflow, format parser issue dan enam temuan preflight. Koreksi tidak mengimplementasikan task aplikasi atau mengubah keputusan ADR. Bukti runtime aplikasi, Windows/Linux/macOS, benchmark, dan keputusan renderer tetap merupakan keluaran task yang harus benar-benar dijalankan.
 
-Verifikasi dokumen yang sudah dijalankan pada 8 November 2026:
+Verifikasi koreksi yang dijalankan pada 8 November 2026:
 
-- `rtk proxy node scripts/sync-issues.ts docs/phases/fase-00.md --dry-run` → exit 0, sepuluh task beserta label/dependensi terbaca, tidak memanggil GitHub. Node 24.18 dipakai hanya untuk skrip starter yang memang memakai `node:*`; ini bukan pengujian produk atau penambahan target runtime Node.
-- Pemeriksaan lokal dengan Python → sepuluh ID berurutan, dependency graph tanpa siklus, 15 tautan lokal/anchor valid, enam contoh JSON valid, fence kode berpasangan.
-- SHA-256 `docs/PLAN.md` dan `docs/PLAN.html` tetap sama dengan sebelum penulisan plan. Tidak ada perubahan pada roadmap sumber.
+- `rtk proxy node scripts/sync-issues.ts docs/phases/fase-00.md --dry-run` → exit 0, sepuluh task beserta label/dependensi terbaca, tidak memanggil GitHub. Node 24.18 dipakai untuk skrip starter portabel dan pemeriksaan dokumen; ini bukan target runtime produk.
+- Pemeriksa sementara di luar repository memakai `parsePhase`/`githubSlug` existing: sepuluh ID dan dependensi identik dengan `origin/main`, graph tanpa siklus, 15 tautan lokal/anchor, enam JSON dan 48 fence berpasangan valid; trigger PR/manual dan deklarasi file T05 cocok.
+- Bun 1.4.2 menjalankan contoh identity/comparator/assembler yang diekstrak ke direktori sementara: 9 test lulus, 0 gagal, 34 assertions. Zod 4.6.7 dipasang hanya di fixture sementara; tidak ada dependency atau file aplikasi yang ditambahkan ke repository. Nilai 100/120/121 tetap data sintetis.
+- Enam test kontrol (7 assertions) lulus terhadap `keys.ts` dari commit pi yang dipin. Ini pemeriksaan encoding tombol, bukan menjalankan renderer/package/native helper.
+- Skrip Bun sementara di luar checkout mengimpor parser repository dengan file URL absolut; versi import relatif gagal seperti yang diharapkan. Keempat blok import Actions T02/T04/T08/T09 juga berhasil terhadap checkout fixture. Child failure tetap exit 1; step gate T09 utuh dengan pengukur sintetis memberi exit 0 tepat 20%, exit 1 pada 21% dan mismatch hardware. Tidak ada compile, benchmark atau run GitHub Actions yang disimulasikan sebagai bukti native.
+- `rtk git diff --check` → exit 0. Hanya kedua dokumen plan/spec berubah; roadmap, ADR dan file aplikasi tidak diubah. Status CI docs dilaporkan di PR; job starter yang melewati pemeriksaan aplikasi bukan bukti test aplikasi.

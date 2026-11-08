@@ -10,7 +10,7 @@
 
 Seluruh 28 file awal diperiksa: 13 file di `docs/` termasuk HTML, Markdown, enam ADR, indeks ADR, template fase dan dua `.gitkeep`; serta 15 file aturan, command, workflow, template GitHub, dan skrip di luar `docs/`. HTML dipelajari termasuk CSS dan JavaScript-nya. Referensi eksternal dalam riset dibaca sebagai klaim dokumen; sumber riset tersebut tidak semuanya diverifikasi ulang.
 
-Kondisi awal:
+Kondisi awal saat rencana pertama ditulis (snapshot historis, bukan status eksekusi saat ini):
 
 - Belum ada `.git`, remote GitHub, `package.json`, lockfile, `src/`, atau `test/`.
 - Bun tidak ditemukan di PATH maupun lokasi instalasi umum yang diperiksa. Git dan GitHub CLI tersedia.
@@ -66,9 +66,9 @@ Perintah di bawah adalah acceptance yang akan dijalankan saat implementasi; belu
 - [ ] `rtk bun test test/config.test.ts test/shell.test.ts test/cli.test.ts` lulus, termasuk config kosong/invalid, prioritas proyek, dan Windows tanpa Git Bash.
 - [ ] `rtk bun test test/mock-provider.test.ts` membuktikan kedua protokol, JSON dan SSE, semua request hanya ke loopback.
 - [ ] Spike boot memiliki data native Linux/Windows/macOS dengan versi Bun, arsitektur, runner, metode, dan raw samples.
-- [ ] Spike renderer memiliki dua prototipe, data ukuran dan latensi serta catatan terminal Windows. ADR-003 menyimpan keputusan berdasarkan hasil.
+- [ ] Spike renderer memiliki dua prototipe; kedua entry source final dan kedua executable compiled dijalankan native Windows/Linux dengan workload input/stream/resize/Escape/Ctrl+C yang sama. Ukuran, latensi, exit dan restore dicatat terpisah per mode; ADR-003 menyimpan keputusan berdasarkan hasil.
 - [ ] `docs/perf/baseline.json` berisi angka terukur, ADR-006 menjelaskan target binary dan lingkungan pembanding, bukan angka tebakan.
-- [ ] `rtk bun run perf` hijau terhadap baseline lingkungan yang sesuai; input regresi >20% membuat pemeriksa dan job CI merah.
+- [ ] `rtk bun run perf` hijau terhadap baseline key/OS/arch/Bun/workload yang sesuai; key lokal menghash host + hardware tanpa hostname mentah, key CI memuat label runner + hash kelas hardware. Mismatch ditolak; input regresi >20% membuat pemeriksa dan job CI merah.
 - [ ] CI `check (ubuntu-latest)`, `check (windows-latest)`, `perf (ubuntu-latest)`, dan `perf (windows-latest)` berjalan. User memverifikasi keempat nama pada proteksi branch setelah meninjau setup.
 - [ ] `rtk bun scripts/sync-issues.ts docs/phases/fase-00.md --dry-run` membaca sepuluh task tanpa memanggil GitHub.
 
@@ -108,13 +108,14 @@ Perintah di bawah adalah acceptance yang akan dijalankan saat implementasi; belu
 
 ### Verifikasi
 
-`rtk bun test test/measure-perf.test.ts` → lulus; workflow manual `baseline` menghasilkan tiga artifact dengan raw samples.
+`rtk bun test test/measure-perf.test.ts` → lulus; workflow `baseline` pada `pull_request` menghasilkan tiga artifact dengan raw samples sebelum merge PR pertama. `workflow_dispatch` dipertahankan untuk run manual setelah workflow ada di default branch.
 
 ### Selesai bila
 
 - [ ] Hello-world benar-benar dibangun dan dijalankan native pada Linux, Windows, macOS.
 - [ ] Startup dan RSS anak diukur berulang; ukuran menggunakan byte binary.
-- [ ] Data menyebut runner/OS/arsitektur/Bun dan membedakan hello-world dari aplikasi.
+- [ ] Data menyebut runner/OS/arsitektur/Bun, SHA checkout dan key dengan hash identitas lokal/kelas hardware CI; hostname lokal mentah tidak dipublikasikan. Hello-world dibedakan dari aplikasi.
+- [ ] Bukti tiga OS tersedia dari PR T02 sebelum merge; import checkout dalam step Bun memakai file URL absolut dari `process.cwd()` dan kegagalan tetap exit nonzero.
 
 ## Task F00-T03 — Spike dua renderer dan keputusan ADR-003
 
@@ -131,11 +132,12 @@ Perintah di bawah adalah acceptance yang akan dijalankan saat implementasi; belu
 
 ### Verifikasi
 
-`rtk bun test spikes/renderer/compare.test.ts` → lulus; pengukuran kedua backend dan uji terminal native dicatat.
+`rtk bun test spikes/renderer/compare.test.ts` → lulus termasuk kontrol pi legacy/Kitty/modifyOtherKeys; kedua source entry dan kedua executable compiled diuji native Windows/Linux. Command lengkap dan workload identik ada pada Task 3 Step 6 di rencana.
 
 ### Selesai bila
 
-- [ ] Kedua opsi diperiksa pada workload identik, termasuk lisensi dan dampak ukuran.
+- [ ] Kedua opsi diperiksa pada workload identik, termasuk lisensi dan dampak ukuran; delapan kombinasi OS × backend × source/compiled memiliki hasil input/stream/resize/exit/restore dan kedua kontrol keluar dicatat. Build sukses saja tidak memenuhi bukti compiled/native-helper.
+- [ ] Kontrol pi memakai `matchesKey` dan tetap membersihkan terminal lewat `stop()`; backend raw minimal mempertahankan kontrak byte yang didokumentasikan.
 - [ ] Latensi yang dicatat membedakan biaya render/write dari input-ke-cat terminal.
 - [ ] ADR-003 memilih opsi berdasarkan bukti; spike tidak menjadi TUI produksi Fase 9.
 
@@ -168,7 +170,7 @@ Perintah di bawah adalah acceptance yang akan dijalankan saat implementasi; belu
 - **Bergantung pada:** F00-T04
 - **Files:**
   - Create: `src/config.ts`, `src/platform/config.ts`, `test/config.test.ts`
-  - Modify: `src/app.ts`, `package.json`, `bun.lock`
+  - Modify: `src/app.ts`, `test/cli.test.ts`, `package.json`, `bun.lock`
 
 ### Langkah
 
@@ -249,7 +251,7 @@ Perintah di bawah adalah acceptance yang akan dijalankan saat implementasi; belu
 
 - [ ] Ketiga metrik diperiksa independen, termasuk binary.
 - [ ] RSS yang diukur milik proses anak yang sudah memuat config/shell, bukan RSS pengukur.
-- [ ] Tidak ada fallback baseline OS lain atau baseline kosong yang membuat CI hijau.
+- [ ] Mismatch host lokal, CPU/jumlah core/RAM, kelas runner, OS/arch, Bun atau workload ditolak; key lama tanpa fingerprint juga ditolak. Tidak ada fallback baseline atau baseline kosong yang membuat CI hijau.
 
 ## Task F00-T09 — Baseline disetujui dan job perf wajib
 
@@ -270,7 +272,7 @@ Perintah di bawah adalah acceptance yang akan dijalankan saat implementasi; belu
 
 ### Selesai bila
 
-- [ ] Baseline tiga OS berisi hasil terukur; perubahan baseline mendapat review `spec-change`.
+- [ ] Baseline tiga OS berisi pasangan hello/agent dengan key/Bun sama per OS/kelas runner; entry lokal terikat fingerprint mesin pengukur. Perubahan baseline mendapat review `spec-change`.
 - [ ] Check dan perf Linux/Windows berjalan tanpa skip bila input baseline hilang.
 - [ ] Nama job pada `CHECKS` sama dengan CI; perubahan proteksi dijalankan user.
 
@@ -299,3 +301,5 @@ Jalankan seluruh daftar gerbang di atas; laporan memuat hasil tiap perintah, URL
 ## Laporan gerbang
 
 Status saat spec ditulis: **belum dijalankan**. Tidak ada kode aplikasi atau baseline yang dibuat oleh pekerjaan perencanaan ini. Bukti implementasi akan dicatat oleh F00-T10 setelah sembilan task sebelumnya selesai dan hasil CI tersedia.
+
+Koreksi rencana 8 November 2026 memperbaiki contoh Actions, trigger baseline, identitas lingkungan, kontrol/eksekusi compiled renderer, dan daftar file T05. Sepuluh ID task, dependensi dan keputusan ADR tetap. Verifikasi koreksi hanya mencakup dokumen dan pemeriksaan contoh terisolasi; tidak membuktikan benchmark, CI aplikasi, atau terminal native tiga OS. Detail perintah dan batas verifikasi ada pada bagian status verifikasi rencana.
