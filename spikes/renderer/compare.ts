@@ -8,15 +8,17 @@ export function diffFrame(previous: string[], next: string[]): string {
 }
 
 export function containsEcho(frame: string, input: string): boolean {
-  return frame
-    // biome-ignore lint/suspicious/noControlCharactersInRegex: remove terminal OSC resets from echo text.
-    .replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, "")
-    // biome-ignore lint/suspicious/noControlCharactersInRegex: cursor moves separate painted lines.
-    .replace(/\x1b\[[0-?]*[ -/]*[ABCDEFGHJKSTf]/g, "\n")
-    // biome-ignore lint/suspicious/noControlCharactersInRegex: ignore CSI styling and synchronization.
-    .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, "")
-    .split(/[\r\n]/)
-    .some((line) => line === `> ${input}`);
+  return (
+    frame
+      // biome-ignore lint/suspicious/noControlCharactersInRegex: remove terminal OSC resets from echo text.
+      .replace(/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)/g, "")
+      // biome-ignore lint/suspicious/noControlCharactersInRegex: cursor moves separate painted lines.
+      .replace(/\x1b\[[0-?]*[ -/]*[ABCDEFGHJKSTf]/g, "\n")
+      // biome-ignore lint/suspicious/noControlCharactersInRegex: ignore CSI styling and synchronization.
+      .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, "")
+      .split(/[\r\n]/)
+      .some((line) => line === `> ${input}`)
+  );
 }
 
 export class EchoProbe {
