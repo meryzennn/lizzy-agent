@@ -43,6 +43,14 @@ the exact build argv, units, hardware, runner/image, and measured checkout SHA.
 On a PR this SHA is the merge ref (`GITHUB_SHA`), not the branch head. Imports
 in Actions' temporary Bun scripts use absolute file URLs from `process.cwd()`.
 
+The first two macOS attempts failed in `setup-bun` before compilation: the
+official browser download URL returned HTTP 504. `gh release download` retrieved
+the same official `bun-v1.4.2` asset through the release API; its SHA-256 matched
+release asset 545329049 (`90987a3a16d7db556d886ac3d551e7b6d3edf0a1cf43acaed622e8676be1d12f`).
+The macOS workflow uses this route, checks that digest and version, and requires
+native ARM64. Updating the Bun pin also requires reviewing the asset checksum.
+Linux and Windows retain `setup-bun` with `.bun-version`.
+
 ## Evidence
 
 Native measurements are pending the first task PR run. Source-only unit tests

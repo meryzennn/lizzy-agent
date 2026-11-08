@@ -19,8 +19,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
+        if: runner.os != 'macOS'
         with:
           bun-version-file: .bun-version
+      - name: Install pinned macOS Bun from the official release API
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(cat .bun-version)" = "1.4.2"
+          test "$RUNNER_ARCH" = "ARM64"
+          gh release download bun-v1.4.2 --repo oven-sh/bun --pattern bun-darwin-aarch64.zip --dir "$RUNNER_TEMP/bun-official"
+          echo "90987a3a16d7db556d886ac3d551e7b6d3edf0a1cf43acaed622e8676be1d12f  $RUNNER_TEMP/bun-official/bun-darwin-aarch64.zip" | shasum -a 256 -c -
+          unzip -q "$RUNNER_TEMP/bun-official/bun-darwin-aarch64.zip" -d "$RUNNER_TEMP/bun-official"
+          test "$("$RUNNER_TEMP/bun-official/bun-darwin-aarch64/bun" --version)" = "$(cat .bun-version)"
+          echo "$RUNNER_TEMP/bun-official/bun-darwin-aarch64" >> "$GITHUB_PATH"
       - run: bun install --frozen-lockfile
       - name: Compile and measure hello
         shell: bun {0}
