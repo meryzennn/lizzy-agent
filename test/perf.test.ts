@@ -235,6 +235,113 @@ test("assembler accepts additional complete hardware pairs without merging ident
   ).toHaveLength(10);
 });
 
+test("unknown CI hardware retains an unapproved native pair while failing the gate", () => {
+  const root = temporary();
+  for (const directory of [
+    "scripts",
+    join("src", "platform"),
+    join("node_modules", "zod"),
+    "dist",
+    join("docs", "perf"),
+  ])
+    mkdirSync(join(root, directory), { recursive: true });
+  const source = readFileSync(
+    resolve(".github/workflows/ci.yml"),
+    "utf8",
+  ).replaceAll("\r\n", "\n");
+  const body = source
+    .split(
+      "      - name: Measure initialized skeleton and enforce performance gate\n",
+    )[1]
+    .split("        run: |\n")[1]
+    .split("      - uses: actions/upload-artifact@v4")[0]
+    .split("\n")
+    .map((line) => line.slice(10))
+    .join("\n");
+  const script = join(root, "gate.ts");
+  writeFileSync(script, body);
+  writeFileSync(
+    join(root, "package.json"),
+    JSON.stringify({ dependencies: { zod: "4.6.7" } }),
+  );
+  writeFileSync(
+    join(root, "node_modules", "zod", "package.json"),
+    JSON.stringify({ version: "4.6.7" }),
+  );
+  writeFileSync(
+    join(root, "dist", process.platform === "win32" ? "agent.exe" : "agent"),
+    Buffer.alloc(100),
+  );
+  const referenceJson = JSON.stringify({
+    ...baseline,
+    entries: [
+      {
+        ...baseline.entries[0],
+        key: measurement.key.replace(/[a-f0-9]{64}$/, "f".repeat(64)),
+      },
+    ],
+  });
+  writeFileSync(join(root, "docs", "perf", "baseline.json"), referenceJson);
+  writeFileSync(
+    join(root, "scripts", "perf.ts"),
+    `export { baselineSchema, checkPerformance } from ${JSON.stringify(pathToFileURL(resolve("scripts/perf.ts")).href)};`,
+  );
+  writeFileSync(
+    join(root, "scripts", "measure-perf.ts"),
+    `
+    import { statSync } from "node:fs";
+    export function measure(command, artifact, workload, runner) {
+      return { ...${JSON.stringify(measurement)}, workload,
+        metrics: { versionMs: 100, idleRssBytes: 100, binaryBytes: statSync(artifact).size },
+        samples: { versionMs: Array(15).fill(100), idleRssBytes: Array(5).fill(100) } };
+    }
+  `,
+  );
+  writeFileSync(
+    join(root, "src", "platform", "process.ts"),
+    `
+    import { writeFileSync } from "node:fs";
+    export function run(command) {
+      if (command[0] === "git") return command[1] === "ls-files" ? "package.json\\n" : "b".repeat(40);
+      if (command[1] === "build") { writeFileSync(command.at(-1), Buffer.alloc(101)); return ""; }
+      throw new Error("Unexpected fixture process");
+    }
+  `,
+  );
+  const result = invoke(root, script);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain("found 0");
+  const report = JSON.parse(
+    readFileSync(join(root, "dist", "perf-result.json"), "utf8"),
+  );
+  const candidate = JSON.parse(
+    readFileSync(join(root, "dist", "perf-candidate.json"), "utf8"),
+  );
+  expect(report.error).toContain("found 0");
+  expect(report.current.workload).toBe("agent-f00-v1");
+  expect(candidate.status).toBe("unapproved");
+  expect(candidate.hello.key).toBe(candidate.agent.key);
+  expect(candidate.hello.bun).toBe(candidate.agent.bun);
+  expect(candidate.hello.workload).toBe("hello-v1");
+  expect(candidate.agent.workload).toBe("agent-f00-v1");
+  expect(candidate.hello.samples.versionMs).toHaveLength(15);
+  expect(candidate.agent.samples.idleRssBytes).toHaveLength(5);
+  expect(candidate.environment.commit).toBe("b".repeat(40));
+  expect(candidate.environment.buildInputSha256["package.json"]).toMatch(
+    /^[a-f0-9]{64}$/,
+  );
+  expect(candidate.environment.installedZod).toBe("4.6.7");
+  expect(candidate.environment.helloBuildCommand.slice(1, 4)).toEqual([
+    "build",
+    "--compile",
+    "spikes/boot.ts",
+  ]);
+  expect(candidate.environment.helloBinarySha256).toMatch(/^[a-f0-9]{64}$/);
+  expect(
+    readFileSync(join(root, "docs", "perf", "baseline.json"), "utf8"),
+  ).toBe(referenceJson);
+});
+
 test.each(metrics)(
   "%s accepts exactly 20%% and fails above it through the CLI",
   (metric) => {

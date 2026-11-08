@@ -85,7 +85,7 @@ jobs:
           const report = {};
           try {
             const { measure } = await import(pathToFileURL(resolve(repository, "scripts/measure-perf.ts")).href);
-            const { checkPerformance } = await import(pathToFileURL(resolve(repository, "scripts/perf.ts")).href);
+            const { baselineSchema, checkPerformance } = await import(pathToFileURL(resolve(repository, "scripts/perf.ts")).href);
             const { run } = await import(pathToFileURL(resolve(repository, "src/platform/process.ts")).href);
             const binary = resolve(repository, "dist", process.platform === "win32" ? "agent.exe" : "agent");
             report.environment = {
@@ -96,6 +96,9 @@ jobs:
               commit: run(["git", "rev-parse", "HEAD"]).trim(), eventCommit: process.env.GITHUB_SHA,
               buildCommand: [process.execPath, "run", "build"],
               binarySha256: createHash("sha256").update(readFileSync(binary)).digest("hex"),
+              buildInputSha256: Object.fromEntries(run(["git", "ls-files", "src", "scripts/build.ts", "spikes/boot.ts", "package.json", "bun.lock", ".bun-version", "tsconfig.json"]).trim().split(/\r?\n/).map(file => [file, createHash("sha256").update(readFileSync(resolve(repository, file))).digest("hex")])),
+              dependencies: JSON.parse(readFileSync(resolve(repository, "package.json"), "utf8")).dependencies,
+              installedZod: JSON.parse(readFileSync(resolve(repository, "node_modules/zod/package.json"), "utf8")).version,
               configuration: "Isolated empty home and working directory; native shell resolution."
             };
             const profile = mkdtempSync(join(tmpdir(), "lizzy-perf-"));
@@ -104,7 +107,21 @@ jobs:
             process.chdir(profile);
             const current = measure([binary], binary, "agent-f00-v1", process.env.LIZZY_PERF_RUNNER);
             report.current = current;
-            const baseline = JSON.parse(readFileSync(resolve(repository, "docs/perf/baseline.json"), "utf8"));
+            const baseline = baselineSchema.parse(JSON.parse(readFileSync(resolve(repository, "docs/perf/baseline.json"), "utf8")));
+            if (!baseline.entries.some(entry => entry.key === current.key && entry.bun === current.bun && entry.workload === current.workload)) {
+              const helloBinary = resolve(repository, "dist", process.platform === "win32" ? "hello.exe" : "hello");
+              const helloBuildCommand = [process.execPath, "build", "--compile", "spikes/boot.ts", "--outfile", helloBinary];
+              process.chdir(repository);
+              run(helloBuildCommand, process.env, 120_000);
+              process.chdir(profile);
+              const hello = measure([helloBinary], helloBinary, "hello-v1", process.env.LIZZY_PERF_RUNNER);
+              if (hello.key !== current.key || hello.bun !== current.bun) throw new Error("Candidate hello/agent identities differ; retain the failure and collect a genuine matching pair.");
+              const candidate = {
+                status: "unapproved", hello, agent: current,
+                environment: { ...report.environment, key: current.key, helloBuildCommand, helloBinarySha256: createHash("sha256").update(readFileSync(helloBinary)).digest("hex") }
+              };
+              writeFileSync(resolve(repository, "dist/perf-candidate.json"), JSON.stringify(candidate, null, 2) + "\n");
+            }
             const failures = checkPerformance(baseline, current);
             report.failures = failures;
             for (const failure of failures) console.error(failure);
@@ -120,5 +137,7 @@ jobs:
         if: always()
         with:
           name: perf-${{ matrix.os }}
-          path: dist/perf-result.json
+          path: |
+            dist/perf-result.json
+            dist/perf-candidate.json
           if-no-files-found: error

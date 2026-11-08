@@ -271,3 +271,25 @@ four `Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz` CPUs and 16758403072
 RAM bytes. Its actual complete pair is retained as candidate evidence, not
 substituted for either the approved-key reference or the uncovered job's key.
 The perf artifacts retain measurements and errors even when matching fails.
+
+### Bounded collection of uncovered hardware
+
+After the normal run also failed on uncovered Linux and Windows hardware, the
+coordinator authorized one bounded collection cycle followed by one clean
+validation cycle. An uncovered perf job now compiles hello natively in that
+same job and measures it in the same isolated empty home/cwd as the initialized
+agent. It verifies the full key and Bun agree, then retains the pair as
+`perf-candidate.json` with status `unapproved`. The job still fails through the
+normal comparator. Missing/invalid baselines and real regressions remain failures;
+collection never writes a baseline or supplies a fallback.
+
+Candidate provenance includes exact native build argv, measured checkout/event
+SHA, image and hardware, artifact SHA-256, hashes of tracked runtime source and
+build inputs, declared dependencies and installed Zod version. Before staging
+new coverage, these inputs must match the T08 reference application at
+`23ff348cdd9d560144c691c5691515cedcfce4b1` (the measured merge checkout's head).
+A separate candidate baseline and append-only semantic diff preserve every
+existing row and cap. Coverage proposals must not come from changed application
+code or raise a matching reference to clear a regression. Any further unknown
+hardware or real regression after the single validation cycle requires a
+stable-runner/policy decision rather than another collection/rerun loop.
