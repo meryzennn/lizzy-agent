@@ -1,7 +1,9 @@
 import { loadConfig } from "./platform/config";
+import { resolveShell } from "./platform/shell";
 
 export async function start(): Promise<number> {
-  await loadConfig();
+  const config = await loadConfig();
+  resolveShell(config.shell.bash);
   process.stderr.write(
     "Skeleton ready. Model calls and the agent loop are not available yet.\n",
   );
