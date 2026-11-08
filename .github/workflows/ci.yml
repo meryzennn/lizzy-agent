@@ -1,0 +1,33 @@
+# Starter CI. Fase 0 melengkapinya: pin versi Bun, tambah job perf (ADR-006),
+# dan tambahkan nama job perf ke status check wajib (scripts/setup-github.sh).
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: check (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest # Fase 0: ganti ke versi tetap
+      # Sebelum Fase 0 membuat package.json, PR docs tetap lulus.
+      - if: hashFiles('package.json') == ''
+        run: echo "Belum ada package.json; check dilewati."
+      - if: hashFiles('package.json') != ''
+        run: bun install --frozen-lockfile
+      - if: hashFiles('package.json') != ''
+        run: bun run check

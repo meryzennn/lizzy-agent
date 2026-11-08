@@ -1,0 +1,1328 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Plan Final Coding Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#f4f2ec;
+    --bg-2:#eceade;
+    --surface:#fffdf7;
+    --surface-2:#f8f5ec;
+    --ink:#1c1a15;
+    --ink-2:#4c473c;
+    --ink-3:#7d7767;
+    --line:#d9d3c2;
+    --line-strong:#b9b096;
+    --accent:#b34700;
+    --accent-ink:#8f3800;
+    --accent-soft:#fbe9d9;
+    --green:#1d6b3c;
+    --green-soft:#e2f0e4;
+    --red:#a52a1f;
+    --red-soft:#f8e3df;
+    --amber:#8a5c00;
+    --amber-soft:#f7ecd2;
+    --code-bg:#22201a;
+    --code-ink:#f0ead8;
+    --shadow:0 1px 2px rgba(28,26,21,.06), 0 8px 24px rgba(28,26,21,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#141310;
+      --bg-2:#1a1915;
+      --surface:#1e1d18;
+      --surface-2:#242219;
+      --ink:#ece7d8;
+      --ink-2:#bdb6a3;
+      --ink-3:#8d8672;
+      --line:#35322a;
+      --line-strong:#4c483a;
+      --accent:#ff8a3d;
+      --accent-ink:#ffa763;
+      --accent-soft:#3a2413;
+      --green:#7fc98f;
+      --green-soft:#1e3324;
+      --red:#f0927f;
+      --red-soft:#3a211c;
+      --amber:#e4b95c;
+      --amber-soft:#38300f;
+      --code-bg:#0d0c0a;
+      --code-ink:#f0ead8;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:16px;line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 20px}
+  a{color:var(--accent-ink)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+  /* ---------- hero ---------- */
+  header.hero{padding:56px 0 8px}
+  .kicker{
+    font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:700;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--accent-ink);
+    display:flex;align-items:center;gap:10px;
+  }
+  .kicker::before{content:"";width:26px;height:2px;background:var(--accent)}
+  h1{
+    font-size:clamp(32px,5.4vw,52px);line-height:1.08;font-weight:800;
+    letter-spacing:-.02em;margin:16px 0 14px;max-width:16ch;
+  }
+  .lede{font-size:clamp(17px,2.2vw,20px);color:var(--ink-2);max-width:68ch;margin:0}
+  .lede strong{color:var(--ink)}
+  .hero-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+  .chip{
+    font-family:"JetBrains Mono",monospace;font-size:12.5px;font-weight:500;
+    border:1px solid var(--line-strong);border-radius:999px;padding:5px 12px;
+    background:var(--surface);color:var(--ink-2);
+  }
+  .chip b{color:var(--ink);font-weight:700}
+
+  /* ---------- sections ---------- */
+  section.block{padding:38px 0 6px}
+  h2{
+    font-size:clamp(22px,3vw,28px);font-weight:800;letter-spacing:-.015em;
+    margin:0 0 6px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+  }
+  h2 .no{
+    font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:700;
+    color:var(--accent-ink);letter-spacing:.1em;
+  }
+  .sub{color:var(--ink-2);margin:0 0 20px;max-width:72ch}
+  h3{font-size:17px;font-weight:800;margin:0 0 8px;letter-spacing:-.01em}
+
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    box-shadow:var(--shadow);padding:22px 24px;
+  }
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:760px){.grid-2{grid-template-columns:1fr}}
+
+  ul.tight,ol.tight{margin:8px 0 0;padding-left:20px}
+  ul.tight li,ol.tight li{margin:5px 0}
+  ul.tight li::marker{color:var(--accent)}
+  code{
+    font-family:"JetBrains Mono",monospace;font-size:.86em;
+    background:var(--bg-2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;
+  }
+  pre{
+    background:var(--code-bg);color:var(--code-ink);border-radius:12px;
+    padding:16px 18px;overflow-x:auto;font-size:13px;line-height:1.55;margin:12px 0 0;
+  }
+  pre code{background:none;border:none;padding:0;color:inherit;font-size:inherit}
+
+  /* ---------- roadmap ---------- */
+  .road{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media (max-width:1000px){.road{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:520px){.road{grid-template-columns:1fr}}
+  .road .r{
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:18px;box-shadow:var(--shadow);
+  }
+  .road .ver{
+    font-family:"JetBrains Mono",monospace;font-weight:700;font-size:20px;color:var(--accent-ink);
+  }
+  .road .fr{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--ink-3);letter-spacing:.06em;margin:2px 0 8px}
+  .road p{margin:0;font-size:14.5px;color:var(--ink-2)}
+  .road .arr{align-self:center}
+
+  /* ---------- principles ---------- */
+  .principles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:760px){.principles{grid-template-columns:1fr}}
+  .principle{
+    display:flex;gap:12px;background:var(--surface);border:1px solid var(--line);
+    border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);
+  }
+  .principle .ic{
+    flex:0 0 auto;width:34px;height:34px;border-radius:9px;background:var(--red-soft);
+    color:var(--red);display:grid;place-items:center;
+  }
+  .principle p{margin:0;font-size:14.5px;color:var(--ink-2)}
+  .principle p b{color:var(--ink)}
+
+  /* ---------- phase nav ---------- */
+  .phasenav{
+    position:sticky;top:0;z-index:20;background:var(--bg);
+    border-bottom:1px solid var(--line);margin-top:34px;
+  }
+  .phasenav .wrap{display:flex;gap:6px;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}
+  .phasenav button{
+    font-family:"JetBrains Mono",monospace;font-size:12.5px;font-weight:500;
+    white-space:nowrap;border:1px solid var(--line-strong);background:var(--surface);
+    color:var(--ink-2);border-radius:999px;padding:7px 13px;cursor:pointer;min-height:36px;
+  }
+  .phasenav button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .phasenav button:hover{border-color:var(--ink)}
+
+  /* ---------- phases ---------- */
+  .phase{
+    background:var(--surface);border:1px solid var(--line);border-radius:16px;
+    box-shadow:var(--shadow);padding:26px 28px;margin:18px 0;scroll-margin-top:76px;
+  }
+  .phase.hidden{display:none}
+  .phase-head{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+  .phase-num{
+    font-family:"JetBrains Mono",monospace;font-weight:700;font-size:15px;
+    background:var(--ink);color:var(--bg);border-radius:10px;
+    padding:8px 12px;white-space:nowrap;line-height:1;
+  }
+  .phase.star .phase-num{background:var(--accent);color:#fff}
+  .phase-head .tt{flex:1 1 260px;min-width:0}
+  .phase-head h3{font-size:21px;margin:0 0 2px}
+  .phase-head .goal{margin:0;color:var(--ink-2);font-size:15px}
+  .tags{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start}
+  .tag{
+    font-family:"JetBrains Mono",monospace;font-size:11.5px;font-weight:700;letter-spacing:.05em;
+    border-radius:6px;padding:3px 8px;text-transform:uppercase;
+  }
+  .tag.rel{background:var(--bg-2);color:var(--ink-2);border:1px solid var(--line)}
+  .tag.diff{background:var(--accent-soft);color:var(--accent-ink);border:1px solid var(--accent)}
+  .phase h4{
+    font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:700;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin:20px 0 4px;
+  }
+  ol.tasks{margin:6px 0 0;padding:0;list-style:none;counter-reset:t}
+  ol.tasks li{
+    counter-increment:t;position:relative;padding:7px 0 7px 40px;
+    border-bottom:1px dashed var(--line);font-size:15px;color:var(--ink-2);
+  }
+  ol.tasks li:last-child{border-bottom:none}
+  ol.tasks li::before{
+    content:counter(t,decimal-leading-zero);
+    position:absolute;left:0;top:9px;
+    font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:700;color:var(--accent-ink);
+  }
+  ol.tasks li b{color:var(--ink)}
+  .done-when{
+    margin-top:18px;background:var(--green-soft);border:1px solid var(--green);
+    border-radius:12px;padding:14px 18px;font-size:14.5px;
+  }
+  .done-when .lbl{
+    font-family:"JetBrains Mono",monospace;font-size:11.5px;font-weight:700;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--green);display:block;margin-bottom:4px;
+  }
+  .done-when p{margin:0}
+
+  /* ---------- backlog / handoff ---------- */
+  .backlog li{margin:8px 0;color:var(--ink-2)}
+  .backlog li b{color:var(--ink)}
+  .rejected{
+    background:var(--red-soft);border:1px solid var(--red);border-radius:12px;
+    padding:14px 18px;font-size:14.5px;margin-top:14px;
+  }
+  .rejected .lbl{
+    font-family:"JetBrains Mono",monospace;font-size:11.5px;font-weight:700;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--red);display:block;margin-bottom:4px;
+  }
+  .rejected p{margin:0}
+  .steps-flow{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:4px}
+  @media (max-width:760px){.steps-flow{grid-template-columns:1fr}}
+  .sf{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .sf .n{font-family:"JetBrains Mono",monospace;font-weight:700;color:var(--accent-ink);font-size:13px}
+  .sf p{margin:6px 0 0;font-size:14.5px;color:var(--ink-2)}
+  .sf p b{color:var(--ink)}
+
+  /* ---------- research findings ---------- */
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media (max-width:900px){.grid-3{grid-template-columns:1fr}}
+  .verdict{
+    background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;
+    padding:16px 20px;font-size:15px;margin-top:16px;
+  }
+  .verdict .lbl{
+    font-family:"JetBrains Mono",monospace;font-size:11.5px;font-weight:700;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--accent-ink);display:block;margin-bottom:4px;
+  }
+  .verdict p{margin:0}
+  .srcs{margin-top:12px;font-size:13px;color:var(--ink-3)}
+  .srcs a{word-break:break-all}
+  table.spec{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
+  table.spec th,table.spec td{border-top:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+  table.spec th{font-family:"JetBrains Mono",monospace;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);border-top:none}
+  table.spec td:first-child{font-weight:700;color:var(--ink);white-space:normal}
+  @media (max-width:560px){
+    table.spec,table.spec tbody,table.spec tr,table.spec td,table.spec th{display:block;width:100%}
+    table.spec thead{display:none}
+    table.spec tr{border-top:1px solid var(--line);padding:6px 0}
+    table.spec td{border-top:none;padding:2px 0}
+  }
+  .note{font-size:13.5px;color:var(--ink-3);margin-top:10px}
+  .rv{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:10.5px;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;border-radius:5px;padding:1px 6px;margin-right:7px;
+    vertical-align:1px;background:var(--green-soft);color:var(--green);border:1px solid var(--green)}
+  .rv.ch{background:var(--amber-soft);color:var(--amber);border-color:var(--amber)}
+  table.spec td:nth-child(2){color:var(--ink-2)}
+  footer{padding:44px 0 56px;color:var(--ink-3);font-size:13.5px}
+  footer .wrap{border-top:1px solid var(--line);padding-top:18px}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="kicker">Plan Final &middot; Superpowers Writing-Plans</p>
+    <h1>Coding agent sendiri, dibangun per fase.</h1>
+    <p class="lede">Satu CLI coding agent open-source ala Claude Code dan Codex yang <strong>provider-agnostic</strong>: jalan di atas endpoint OpenAI-compatible dan Anthropic Messages mana pun, dengan <strong>9Router sebagai preset kelas satu</strong> (termasuk model Antigravity <code>ag/*</code> lewat 9Router), plus pembeda yang belum ada dalam bentuk terintegrasi di agent pasaran: <strong>hard budget</strong>, <strong>combo fallback bernama yang bisa diatur sendiri</strong>, <strong>verification gate</strong>, dan <strong>saran ganti model berbasis frustrasi user</strong>. Dashboard <strong><code>/stats</code> lokal ala Oh My Pi</strong> (usage per model, RAM proses, frustrasi per model) masuk sebagai fase observability tersendiri. Terakhir, <strong>Discord Rich Presence yang lengkap</strong> masuk sebagai fase: status agent (working, waiting approval, planning, orchestrating), model, token, dan timer sesi tampil di profil Discord user lewat IPC lokal, dengan kontrol privasi per field sejak hari pertama. Penutupnya, <strong>appearance dan status line kelas satu ala Oh My Pi/Pi</strong> (Fase 15): tema JSON &plusmn;38 token &mdash; 5 bawaan plus file user dan proyek dengan hot reload, slot dark/light terpisah &mdash; status line dua lapis (segmen yang bisa diatur sendiri plus hook perintah eksternal kompatibel Claude Code, termasuk segmen sisa budget yang tidak dimiliki agent mana pun), dan <strong>budget performa tertulis yang dites di CI</strong> supaya klaim &ldquo;ringan&rdquo; itu terukur: cold start &lt;300 ms, idle RSS &lt;100 MB, dan ukuran binary yang targetnya ditetapkan dari baseline terukur di Fase 0. <strong>Revisi 8 Nov 2026</strong> mengunci enam keputusan arsitektur dan menambal lubang di inti agent &mdash; lihat bagian R.</p>
+    <div class="hero-meta">
+      <span class="chip">Fase: <b>0 sampai 15</b></span>
+      <span class="chip">Rilis: <b>v0.1 &rarr; v0.7</b></span>
+      <span class="chip">Stack: <b>TypeScript + Bun-only</b></span>
+      <span class="chip">Revisi: <b>8 Nov 2026</b></span>
+      <span class="chip">Gaya: <b>tugas kecil, bukan one-shot</b></span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ REVISI ============ -->
+  <section class="block" id="revisi">
+    <h2><span class="no">R</span> Revisi 8 Nov 2026: keputusan yang dikunci</h2>
+    <p class="sub">Review atas versi sebelumnya menemukan bagian yang saling bertabrakan dan lubang di inti agent. Revisi ini mengunci enam keputusan sebelum baris kode pertama, memperbaiki kontradiksi, dan menambah tugas yang hilang. Tugas yang berubah ditandai <span class="rv ch">diubah</span>, tugas baru <span class="rv">baru</span>. Riset A2&ndash;A4 dibiarkan sebagai catatan riset; bila angkanya bertabrakan dengan bagian ini, bagian ini yang berlaku.</p>
+    <div class="card">
+      <h3>Keputusan arsitektur (ADR), ditinjau ulang dengan data spike di Fase 0</h3>
+      <table class="spec">
+        <thead><tr><th>Keputusan</th><th>Pilihan</th><th>Alasan</th></tr></thead>
+        <tbody>
+          <tr><td>ADR-001 Runtime</td><td><b>Bun-only.</b> Klaim kompatibel Node &ge;22 dicabut.</td><td>Plan sendiri memakai <code>Bun.serve</code>, <code>bun:sqlite</code>, <code>bun:jsc</code>, dan <code>Bun.connect</code>, tanpa CI Node. Distribusinya binary <code>bun build --compile</code>, jadi kompatibilitas Node tidak membeli apa pun.</td></tr>
+          <tr><td>ADR-002 Lapisan model</td><td><b>Adapter HTTP sendiri</b> (<code>fetch</code> + parser SSE) untuk OpenAI Chat Completions dan Anthropic Messages. Vercel AI SDK tidak dipakai.</td><td>Format kanonik sudah milik kita; AI SDK menambah lapis konversi ketiga dengan risiko thinking signature dan field khusus provider hilang. Dua protokol cukup kecil untuk ditulis sendiri dan lebih ringan untuk budget startup.</td></tr>
+          <tr><td>ADR-003 Renderer TUI</td><td><b>Renderer diferensial model pi-tui</b> (<code>render(width): string[]</code>, diff baris, CSI 2026). Ink tidak dipakai. Spike Fase 0 memutuskan: paket pi-tui langsung atau tulis sendiri.</td><td>Model render Ink (reconciler React + Yoga yang menggambar ulang area dinamis) bertentangan dengan target latensi dan scrollback committed. Keputusan ini harus jatuh sebelum Fase 9, bukan dibongkar di Fase 15.</td></tr>
+          <tr><td>ADR-004 Shell di Windows</td><td>Tool <code>bash</code> memakai <b>Git Bash</b> (dideteksi; path bisa disetel di config). Tanpa Git Bash: pesan error jelas berisi cara instal. Tool PowerShell native masuk backlog.</td><td>Satu dialek shell untuk model di semua OS, dan parser izin cukup satu grammar (tree-sitter-bash).</td></tr>
+          <tr><td>ADR-005 Format config</td><td><b>JSONC</b> untuk semua config (global + proyek), divalidasi zod. Tema tetap JSON.</td><td>Versi lama mencampur JSON, TOML, dan YAML. Satu format, tanpa dependensi parser tambahan.</td></tr>
+          <tr><td>ADR-006 Gerbang performa</td><td><b>Diukur sejak Fase 0</b>: waktu <code>--version</code>, idle RSS, dan ukuran binary per OS, dengan baseline di repo dan gerbang regresi &gt;20% di CI. Target absolut binary ditetapkan dari baseline hello-world Fase 0.</td><td>Regresi yang baru ketahuan di Fase 15 mahal dibongkar. Binary kosong <code>bun build --compile</code> sendiri sudah berukuran puluhan MB atau lebih tergantung platform, jadi angka 60 MB tidak boleh ditebak.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="grid-2" style="margin-top:16px">
+      <div class="card">
+        <h3>Kontradiksi yang diperbaiki</h3>
+        <ul class="tight">
+          <li><b>Retry Fase 6</b>: tidak ada lagi retry 10&times; dengan backoff sampai 300 detik sebelum fallback. Retry pendek, hormati <code>Retry-After</code>, lalu pindah entri.</li>
+          <li><b>Ink vs pi-tui</b>: diselesaikan ADR-003; Fase 9 dan 15 diselaraskan.</li>
+          <li><b>LSP</b>: dihapus dari Fase 2, 12, dan 15. Diagnostik pasca-giliran memakai perintah per proyek dari config; klien LSP masuk backlog.</li>
+          <li><b>API ekstensi tanpa sistem ekstensi</b>: <code>setStatus</code>/<code>setWidget</code> di Fase 15 menjadi API internal untuk modul sendiri; sistem ekstensi pihak ketiga masuk backlog.</li>
+          <li><b>Klaim pembeda di bagian E</b>: disesuaikan dengan riset sendiri (fallbackChains OMP, LiteLLM, Stop hook Claude Code).</li>
+          <li><b>Memory lintas proyek</b>: dikeluarkan dari daftar &ldquo;yang dibangun&rdquo;; tetap di backlog F.</li>
+          <li><b>Path pipe Discord</b>: spike menguji <code>\\.\pipe\</code> dan <code>\\?\pipe\</code>; transport memakai bentuk yang lolos.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Lubang yang ditambal</h3>
+        <ul class="tight">
+          <li><b>Verification gate tahan bypass lewat bash</b>: runner meng-hash file terlindungi dan config test (Fase 7).</li>
+          <li><b>Normalisasi transkrip saat ganti model</b>: thinking bersignature, ID tool call, compaction pra-pindah, gagal di tengah streaming (Fase 6).</li>
+          <li><b>Masalah Windows yang nyata</b>: CRLF, path, kill pohon proses, Git Bash (Fase 0 dan 2).</li>
+          <li><b>REPL minimal + headless dasar</b> di Fase 2, supaya v0.1 bisa dipakai sebelum TUI Fase 9.</li>
+          <li><b>Checkpoint file dan <code>/rewind</code></b> (Fase 2).</li>
+          <li><b>Eval harness dengan model asli</b> + system prompt dan deskripsi tool berversi (Fase 2 dan 4).</li>
+          <li><b>Katalog metadata model</b> (snapshot models.dev + override) dan pencatatan model aktual dari respons (Fase 1).</li>
+          <li><b>Redaksi secret</b> di transkrip dan export (Fase 5); <b>keamanan dashboard</b> lewat cek Host/Origin + token (Fase 12).</li>
+          <li><b>Leksikon frustrasi per bahasa</b>, minimal Inggris + Indonesia (Fase 13).</li>
+          <li><b>Budget default berbasis token dan giliran</b>; dolar opsional, karena model langganan via 9Router tidak punya harga (Fase 6).</li>
+        </ul>
+      </div>
+    </div>
+    <p class="note">Alur eksekusi juga berubah: file MD per fase ditulis tepat sebelum fasenya dimulai (bukan 16 sekaligus), dan status kerja dilacak di GitHub Issues. Lihat bagian G.</p>
+  </section>
+
+  <!-- ============ ARSITEKTUR ============ -->
+  <section class="block" id="arsitektur">
+    <h2><span class="no">A</span> Arsitektur yang direncanakan</h2>
+    <p class="sub">Diringkas dari enam riset (anatomi agent modern, 9Router dan Antigravity, orchestration, riset penutup di bagian A2, riset Discord RPC di bagian A3, dan riset appearance/status line/profil ringan Oh My Pi dan Pi di bagian A4). Ini fondasi yang dipakai semua fase di bawah.</p>
+    <div class="grid-2">
+      <div class="card">
+        <h3>Loop dan pesan</h3>
+        <ul class="tight">
+          <li><b>Loop manual satu langkah model per putaran</b> (pola OpenCode <code>SessionPrompt.loop()</code>): rakit konteks, panggil model sekali, cek izin, eksekusi tool, potong hasil, ulangi. Di sela langkah bisa disisipkan permission check, budget check, compaction, dan checkpoint file (Fase 2).</li>
+          <li><b>Format pesan kanonik internal bergaya Anthropic</b>: blok terurut text, tool_use, tool_result, thinking. Adapter HTTP sendiri (ADR-002) menerjemahkan ke dan dari OpenAI Chat Completions dan Anthropic Messages, termasuk normalisasi transkrip saat model berganti di tengah sesi (Fase 6).</li>
+          <li><b>Sesi = JSONL append-only</b> yang formatnya didokumentasikan, bisa resume, fork, export, dan import. Catatan mentah per pesan (termasuk pesan user dan record usage per request) adalah satu-satunya sumber data untuk dashboard stats dan frustrasi nanti &mdash; agregat selalu turunan, tidak pernah instrumentasi ulang.</li>
+          <li><b>Observability = rollup SQLite di atas JSONL itu</b> (pola omp-stats): sinkronisasi inkremental berkursor ke <code>bun:sqlite</code>, rollup per jam, dashboard disajikan server HTTP lokal Bun. Statistik RAM proses/mesin adalah lapis terpisah yang di-sampling berkala, bukan dari transkrip.</li>
+          <li><b>Subagent = fungsi dengan context segar</b> yang mengembalikan ringkasan. Orchestration di fase akhir meminjam model state Run/Task/Dispatch punya Orca, disimpan di SQLite.</li>
+          <li><b>Discord RPC = modul in-process yang diberi makan event loop</b>, bukan polling dan bukan daemon terpisah: <code>session.started</code>, <code>tool.started/finished</code>, <code>approval.requested/resolved</code>, <code>usage.updated</code>, <code>worker.spawned/exited</code>, <code>session.ended</code>. Modul ini bicara ke Discord desktop lewat IPC lokal dan gagal diam-diam bila Discord tidak jalan; ia tidak pernah boleh mengganggu loop.</li>
+          <li><b>Appearance = tema JSON ala Pi yang dipangkas + status line dua lapis</b> (Fase 15): satu file JSON per tema (<code>vars</code> + <code>colors</code> &plusmn;38 token + <code>export</code> opsional), slot <code>theme.dark</code>/<code>theme.light</code> terpisah, dan status line yang lapis pertamanya segmen terkonfigurasi (termasuk segmen sisa budget dari Fase 6) dan lapis keduanya hook perintah eksternal ber-JSON kompatibel Claude Code. Rendering diferensial + CSI 2026 membuat keduanya murah; budget performanya tertulis dan dites, bukan klaim.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Provider dan 9Router</h3>
+        <ul class="tight">
+          <li><b>Provider didefinisikan sebagai blok config</b> (pola OpenCode): id, baseURL, apiKey dari env, daftar model, dan override context window per model.</li>
+          <li><b>Override context window WAJIB menang atas klaim router.</b> 9Router melabeli model custom 200k padahal aslinya bisa cuma 131k; kalau klaim router yang menang, sesi bakal meledak di tengah jalan.</li>
+          <li><b>Preset 9Router bawaan</b>: baseURL <code>http://localhost:20128/v1</code>, model <code>ag/*</code> (Antigravity), <code>kr/*</code>, dan lain-lain terdokumentasi. Login Antigravity diurus 9Router, agent ini tidak menyentuh OAuth sama sekali.</li>
+          <li><b>Combo = model virtual bernama di file config</b> (Fase 6): nama combo bisa ditulis di mana pun penyeleksi model bisa ditulis (termasuk mengisi role seperti <code>default</code> atau <code>smol</code>), isinya daftar terurut <code>provider/model</code> yang bebas mencampur provider &mdash; gabungan pengemasan 9Router dan mekanik <code>retry.fallbackChains</code> OMP, tapi bisa diedit sebagai file config JSONC biasa (ADR-005), bukan dashboard-only.</li>
+        </ul>
+        <pre><code>{
+  "provider": {
+    "9router": {
+      "baseURL": "http://localhost:20128/v1",
+      "apiKey": "{env:NINEROUTER_API_KEY}",
+      "models": {
+        "ag/claude-sonnet-4-6": { "context": 200000 }
+        // override per model di sini menang atas label router
+      }
+    }
+  }
+}</code></pre>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Tech stack</h3>
+      <p style="margin:0;color:var(--ink-2)"><span class="rv ch">diubah</span><b style="color:var(--ink)">TypeScript + Bun-only</b> (ADR-001): Bun untuk dev, test, dan <code>bun build --compile</code> untuk binary; akses OS tetap lewat modul tipis supaya mudah diuji. <b style="color:var(--ink)">Adapter HTTP sendiri</b> untuk OpenAI-compatible dan Anthropic Messages (ADR-002), tanpa Vercel AI SDK. <code>@modelcontextprotocol/sdk</code> untuk MCP, di-lazy-import. ripgrep dibundel per platform. <code>web-tree-sitter</code> (WASM, bukan addon native) untuk parsing perintah bash di izin, dimuat malas; repo map tetap opsional. Hitung token: heuristik + kalibrasi dari <code>usage</code> respons; <code>js-tiktoken</code> opsional dan dimuat malas. <b style="color:var(--ink)">Renderer TUI diferensial model pi-tui</b> (ADR-003), bukan Ink. zod untuk skema; config <b style="color:var(--ink)">JSONC</b> (ADR-005). Shell tool di Windows: <b style="color:var(--ink)">Git Bash</b> (ADR-004). Metadata model (context window, harga, kapabilitas) dari snapshot <code>models.dev</code> yang dibundel + override lokal. <code>git</code> dipanggil sebagai proses.</p>
+    </div>
+  </section>
+
+  <!-- ============ RISET PENUTUP ============ -->
+  <section class="block" id="riset-penutup">
+    <h2><span class="no">A2</span> Riset penutup: <code>/stats</code>, RAM, frustrasi, combo</h2>
+    <p class="sub">Tiga pertanyaan terakhir dijawab dari riset 7&ndash;8 Nov 2026 atas Oh My Pi (<code>can1357/oh-my-pi</code>, fork keras dari Pi-nya Mario Zechner), 9Router, dan port frustrasi ke OpenCode. Ini yang mengubah plan dari 12 fase menjadi 14 fase (0&ndash;13).</p>
+    <div class="grid-3">
+      <div class="card">
+        <h3>1. <code>/stats</code>-nya Oh My Pi: beneran Bun, beneran server lokal</h3>
+        <ul class="tight">
+          <li><b>Cara jalan:</b> <code>omp stats</code> di shell atau <code>/stats</code> di dalam sesi membuka dashboard web lokal yang sama, default <code>http://localhost:3847</code>, bind default <code>127.0.0.1</code>; opsi <code>--port</code> dan <code>--host</code> ada. Mode tanpa dashboard: <code>omp stats --summary</code> dan <code>--json</code>.</li>
+          <li><b>Link IP lokal yang kamu lihat</b> (mis. <code>192.168.x.x:3847</code>) itu server yang sama yang di-bind lewat <code>--host</code>, setup container/remote, atau build lain &mdash; bukan halaman cloud. <em>Catatan riset: versi persis yang kamu pakai tidak ditentukan, jadi jalur pastinya tidak bisa dipastikan.</em></li>
+          <li><b>Bun-nya terverifikasi di semua lapis yang bisa dicek:</b> <code>package.json</code> paket <code>@oh-my-pi/omp-stats</code> mendeklarasikan <code>"engines": { "bun": "&gt;=1.4.4" }</code>, skripnya <code>bun run</code>, dependensi runtime-nya cuma React, React DOM, dan lucide-react &mdash; <b>tidak ada Express/Hono/framework server Node</b>, jadi lapisan HTTP-nya menumpang runtime Bun sendiri, dan storage-nya eksplisit <code>bun:sqlite</code>. <em>Hedge dari riset: file sumber servernya sendiri tidak dibuka, jadi pemanggilan literal <code>Bun.serve(...)</code> sangat mungkin tapi tidak dikutip sebagai fakta; ekuivalen idiomatiknya untuk implementasi kita memang <code>Bun.serve({ port, hostname, fetch })</code>.</em></li>
+          <li><b>Pipeline data:</b> log sesi JSONL dari <code>~/.omp/agent/sessions/</code> disinkronkan inkremental (kursor tersimpan, commit atomik) ke SQLite <code>~/.omp/stats.db</code> dengan rollup per jam (<code>message_rollup</code> / <code>tool_rollup</code> / <code>session_rollup</code>); watcher menyinkronkan ulang transkrip yang sedang ditulis; API-nya <code>GET /api/stats</code>, <code>/api/stats/models</code>, <code>/api/stats/timeseries</code>, <code>/api/status</code>, <code>GET /api/events</code> (SSE), <code>POST /api/sync</code>.</li>
+          <li><b>Halaman dashboard-nya:</b> Overview, Models, Providers, Costs, Requests, Errors, Traces, Tools, <b>Frustration</b>, Projects, Gain.</li>
+        </ul>
+        <p class="srcs">Sumber: <a href="https://github.com/can1357/oh-my-pi/tree/main/packages/stats">github.com/can1357/oh-my-pi &mdash; packages/stats</a> &middot; <a href="https://github.com/can1357/oh-my-pi/blob/main/packages/stats/package.json">packages/stats/package.json</a> &middot; <a href="https://omp.sh/docs/cli">omp.sh/docs/cli</a></p>
+      </div>
+      <div class="card">
+        <h3>2. Usage per model: yang dicatat semua agent; RAM: belum ada yang mencatat</h3>
+        <ul class="tight">
+          <li><b>Model data per request yang jadi konvensi semua agent</b> (OMP, Claude Code <code>/usage</code>, OpenCode <code>opencode stats</code>, Codex <code>/status</code> + <code>/usage</code>): provider + model versi persis, timestamp, sesi/proyek, token input, output, cache-read, cache-write, reasoning bila dilaporkan, durasi request dan TTFT (turunannya tokens/s), stop reason (turunannya error rate), dan panggilan tool. Biaya = token &times; rate card publik, <b>dilabeli estimasi setara API</b>; model langganan tanpa harga publik ditampilkan <code>N/A</code>, bukan $0.</li>
+          <li><b>Metrik turunan versi omp-stats:</b> Tokens/s = <code>output_tokens / (duration/1000)</code>; Cache Rate = <code>cache_read / (input + cache_read) * 100</code>; Error Rate = <code>count(stopReason=error) / total_calls * 100</code>; plus Cache Savings, Avg Latency, TTFT.</li>
+          <li><b>RAM/CPU proses tidak ada di omp-stats sama sekali</b> &mdash; tidak ada halaman atau metriknya. Konteks % pun di OMP hidup di footer TUI, bukan di dashboard. Jadi statistik RAM di plan ini <b>pekerjaan baru</b>, bukan meniru OMP. Referensi UX-nya tool standalone seperti btop / bottom (<code>btm</code>) / htop yang polling tiap 1&ndash;2 detik.</li>
+          <li><b>API-nya (Node-compatible, jalan di Bun):</b> <code>process.memoryUsage()</code> &mdash; <code>rss</code> adalah angka headline &ldquo;RAM agent ini&rdquo; dan satu-satunya angka memori yang maknanya kurang lebih sama di semua OS; <code>process.cpuUsage()</code> dalam mikrodetik kumulatif, CPU% wajib dari selisih dua sampel; mesin: <code>os.totalmem()</code> / <code>os.freemem()</code> / <code>os.cpus()</code> (diff dua snapshot). Detail heap Bun: <code>bun:jsc</code> <code>heapStats()</code>.</li>
+          <li><b>Jebakan Windows:</b> <code>os.loadavg()</code> selalu <code>[0, 0, 0]</code> di Windows (sembunyikan field-nya di <code>win32</code>); RSS proses induk <b>tidak</b> termasuk proses anak (LSP, shell, subagent) &mdash; total footprint butuh penjumlahan pohon proses; di luar builtin, pustaka <code>systeminformation</code> dukungannya eksplisit &ldquo;Linux, macOS, partial Windows&rdquo; dan di Windows men-shell-out ke PowerShell, jadi lambat.</li>
+        </ul>
+        <p class="srcs">Sumber: <a href="https://github.com/can1357/oh-my-pi/tree/main/packages/stats">omp-stats README (definisi metrik)</a> &middot; <a href="https://nodejs.org/download/release/v4.2.0/docs/doc/api/os.html">Node.js os docs (loadavg di Windows)</a> &middot; <a href="https://npm.io/package/systeminformation">npm &mdash; systeminformation</a></p>
+      </div>
+      <div class="card">
+        <h3>3. Frustrasi per model: sudah ada di OMP, tapi tidak ada yang menindaklanjutinya</h3>
+        <ul class="tight">
+          <li><b>Fakta utamanya:</b> sejak <b>v18.4.0</b>, dashboard omp-stats punya halaman <b>Frustration</b>: per <em>versi model</em>, seberapa sering pesan user tergolong <em>annoyed</em>, <em>annoyed at the assistant</em>, dan <em>angry at it</em>. Halaman ini menggantikan halaman Behavior lama yang, dalam kata-kata port-nya, mengukur &ldquo;seberapa sering user memaki modelnya&rdquo;.</li>
+          <li><b>Klasifikasi dua tingkat.</b> (a) Sinyal heuristik lokal regex atas prosa yang sudah dibersihkan (fence kode, kode inline, tag, URL, mention file, baris kutipan dibuang dulu; pencocokan word-boundary, case-insensitive):</li>
+        </ul>
+        <table class="spec">
+          <thead><tr><th>Sinyal</th><th>Yang ditangkap</th></tr></thead>
+          <tbody>
+            <tr><td>Yelling</td><td>Kalimat mayoritas CAPS multi-kata</td></tr>
+            <tr><td>Profanity</td><td>Daftar kata umpatan terkurasasi (termasuk varian tersensor); slur identitas dan kata yang teknis di korpus coding sengaja dikecualikan</td></tr>
+            <tr><td>Anguish</td><td><code>!!!</code>, <code>noooo</code>, <code>ugh</code>, <code>argh</code>, <code>dude</code>, <code>:(</code></td></tr>
+            <tr><td>Negation</td><td>Pembuka pesan <code>no</code> / <code>nope</code> / <code>wrong</code>, <code>makes no sense</code></td></tr>
+            <tr><td>Repetition</td><td><code>like i said</code>, <code>i already told you</code>, <code>still doesnt</code></td></tr>
+            <tr><td>Blame</td><td><code>you didn't</code>, <code>why did you</code>, <code>stop X-ing</code> di awal kalimat</td></tr>
+          </tbody>
+        </table>
+        <ul class="tight">
+          <li><b>Guard anti false-positive:</b> pesan &ge;3 baris prosa dinolkan semua sinyal emosionalnya di OMP upstream (prompt yang diformat rapi dianggap disengaja, bukan emosional). Tiga bucket bersarang: annoyed = sinyal apa pun menyala; at-assistant = negation + repetition + pola blame; angry = at-assistant <b>dan</b> (profanity atau yelling).</li>
+          <li><b>(b) Judge LLM opsional:</b> role model <code>judge</code> mengklasifikasi tiap teks prosa unik (estimasi biaya ditampilkan <em>sebelum</em> jalan; verdict di-cache berdasarkan hash prosa di tabel <code>frustration_verdicts</code>, jadi run ulang gratis). Dengan verdict: annoyed = P(level 2) + P(level 3) &ge; 0.5; angry = P(level 3) &ge; 0.5 plus targetnya harus assistant; baris dengan verdict &lt;50% pesan ditandai &ldquo;mostly regex&rdquo;.</li>
+          <li><b>Atribusi:</b> tiap pesan user diatribusikan ke model yang sedang diajak bicara user (mengikuti pergantian model di tengah sesi) &mdash; itu yang membuat tabel per versi model mungkin. Semuanya lokal kecuali panggilan judge-nya sendiri.</li>
+          <li><b>Sinyal perilaku gratis</b> dari log sesi yang sudah ada: frekuensi rewind/undo dan revert edit, diff git yang dibuang setelah giliran agent, prompt nyaris identik dikirim ulang, model diganti manual tepat setelah sebuah giliran, sesi ditinggal di tengah tugas.</li>
+          <li><b>Dukungan akademis:</b> paper ICSE 2026 (Nam, Salawa &amp; Chandra) menemukan sinyal kepuasan yang bisa dipakai di ~8% interaksi prompt developer, &gt;13&times; laju feedback eksplisit, dari log industri 372 developer profesional.</li>
+          <li><b>Celahnya:</b> <b>tidak ditemukan satu pun agent yang memakai frustrasi untuk menyarankan apalagi melakukan pergantian model</b> &mdash; OMP hanya melaporkan. Ini temuan ketiadaan bukti dari pencarian yang dilakukan, bukan bukti pasti; lapis saran/switch-nya wilayah yang belum diklaim di sumber publik.</li>
+        </ul>
+        <p class="srcs">Sumber: <a href="https://github.com/can1357/oh-my-pi/releases/tag/v18.4.0">Release OMP v18.4.0</a> &middot; <a href="https://raw.githubusercontent.com/pixincreate/opencode-mouth/master/docs/how-it-works.md">opencode-mouth &mdash; how-it-works (port terdokumentasi dari fitur OMP)</a> &middot; <a href="https://npm.io/package/opencode-mouth/v/2.0.0">npm &mdash; opencode-mouth</a> &middot; <a href="https://conf.researchr.org/details/icse-2026/icse-2026-nier/3/Reading-Between-the-Lines-Scalable-User-Feedback-via-Implicit-Sentiment-in-Developer">ICSE 2026 NIER &mdash; Reading Between the Lines</a></p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>4. Combo fallback: mekanik 9Router, dan versi OMP yang lebih kuat</h3>
+      <div class="grid-2" style="margin-top:6px">
+        <div>
+          <p style="margin:0 0 6px;color:var(--ink-2)"><b style="color:var(--ink)">9Router &mdash; combo = model virtual bernama.</b> Daftar terurut string <code>provider/model</code> yang dibuat di dashboard web (<code>http://localhost:20128</code>, Dashboard &rarr; Combos), lalu klien cukup mengirim <b>nama combo sebagai field <code>model</code></b> ke <code>http://localhost:20128/v1</code>. Combo bebas mencampur provider, langganan, API berbayar, dan tier gratis &mdash; pencampuran itu memang tujuannya (&ldquo;Subscription &rarr; Cheap &rarr; Free&rdquo;).</p>
+          <pre><code>// Combo "premium-coding" (contoh dari docs 9Router)
+[ "cc/claude-opus-4-5-20251101",  // langganan, dicoba dulu
+  "glm/glm-4.7",                  // cadangan murah
+  "minimax/MiniMax-M2.1" ]        // fallback termurah
+// Request klien: { "model": "premium-coding", ... }</code></pre>
+          <ul class="tight">
+            <li><b>Strategi default Fallback:</b> coba berurutan, maju ke model berikutnya <b>hanya saat gagal</b> &mdash; di docs: rate limit (429) atau error transien 502/503/504; error seperti 400 dikembalikan ke klien langsung dan tidak menelusuri rantai. Tiap model dicoba <b>sekali</b>, tidak ada loop retry di dalam combo. Strategi lain: <b>Round Robin</b> (rotasi model awal, ada sticky limit), <b>Smart Router</b> (model judge memilih di depan, fail-open ke urutan sekuensial), <b>Fusion</b> (semua model paralel + judge mensintesis), plus penataan ulang otomatis berdasar kapabilitas yang dibutuhkan giliran ini. Combo juga bisa punya batas budget harian/bulanan (model berbayar diskip demi yang gratis saat batas kena).</li>
+            <li><b>Penyimpanan &mdash; ada selisih versi yang harus diketahui:</b> <code>docs/ARCHITECTURE.md</code> 9Router (Feb 2026) mendokumentasikan lowdb <code>~/.9router/db.json</code>; catatan kode yang lebih baru menyebut migrasi ke SQLite (<code>~/.9router/db/data.sqlite</code>, tabel <code>combos</code> berisi <code>name</code> + array JSON <code>models</code>). Perlakukan <code>db.json</code> sebagai bentuk terdokumentasi/lama dan SQLite sebagai bentuk terkini.</li>
+          </ul>
+        </div>
+        <div>
+          <p style="margin:0 0 6px;color:var(--ink-2)"><b style="color:var(--ink)">OMP &mdash; <code>retry.fallbackChains</code>, native dan lebih umum</b>, di <code>~/.omp/agent/config.yml</code>. Preseden file-config terbersih selain itu: LiteLLM (<code>fallbacks: [{"primary": ["fallback-1", &hellip;]}]</code> atas grup <code>model_name</code> bernama). Upstream Pi tidak punya rantai native (ekstensi yang menambahkan); OpenCode tidak native (plugin yang menambahkan); Cline/Roo Code tidak punya rantai bernama dan mendelegasikan ke gateway di bawahnya.</p>
+          <pre><code>retry:
+  enabled: true
+  maxRetries: 10            # retry model sama, backoff 500ms &rarr; 300000ms
+  modelFallback: true
+  fallbackOn: any           # any | usage-limit | except-usage-limit
+  fallbackRevertPolicy: cooldown-expiry
+  fallbackChains:
+    default:                # kunci role; role tanpa rantai mewarisi ini
+      - anthropic/claude-opus-4-5
+      - openai/gpt-5.5
+      - google/gemini-3-pro
+    smol: []                # [] mematikan fallback untuk role ini
+    google/gemini-3-pro:    # kunci model persis
+      - google-vertex/gemini-3-pro
+    google-antigravity/*:   # kunci provider/*
+      - google/*            # entri provider/* menukar provider saja</code></pre>
+          <ul class="tight">
+            <li><b>Mekanik yang dicopy ke plan ini:</b> resolusi berdasar spesifisitas (model persis &gt; <code>provider/*</code> &gt; role &gt; <code>default</code>); kandidat yang sedang cooldown, tanpa kredensial, atau tidak kompatibel diskip; <b>rotasi kredensial di dalam satu provider dicoba sebelum fallback model</b>; <code>fallbackOn: usage-limit</code> membatasi penelusuran hanya untuk error kuota/belanja; perubahan config di-reload langsung. Yang tidak dimiliki OMP: pengemasan 9Router (nama virtual yang bisa ditulis di field model, editor dashboard, strategi round-robin/fusion).</li>
+            <li><b>Bentuk config final untuk agent ini</b> (sintesis 9Router + OMP + LiteLLM, dieksekusi di Fase 6): combo bernama yang bisa dipakai di mana pun penyeleksi model bisa dipakai, termasuk oleh role; daftar terurut penyeleksi <code>provider/model</code> yang sepenuhnya terkualifikasi dan bebas dicampur; <code>fallbackOn</code> per combo; cooldown + kebijakan revert; combo satu entri valid sebagai alias.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="srcs">Sumber: <a href="https://github.com/decolua/9router/blob/master/gitbook/content/en/features/combos.md">9Router &mdash; combos.md</a> &middot; <a href="https://github.com/decolua/9router/blob/master/docs/ARCHITECTURE.md">9Router &mdash; ARCHITECTURE.md</a> &middot; <a href="https://github.com/can1357/oh-my-pi/blob/main/docs/settings.md">OMP &mdash; docs/settings.md (retry.fallbackChains)</a> &middot; <a href="https://github.com/can1357/oh-my-pi/blob/main/docs/models.md">OMP &mdash; docs/models.md</a> &middot; <a href="https://docs.litellm.ai/docs/proxy/reliability">LiteLLM &mdash; fallbacks</a></p>
+    </div>
+    <div class="verdict">
+      <span class="lbl">Vonis final riset</span>
+      <p><b>Bisa, semuanya.</b> <code>/stats</code> ala OMP bisa ditiru persis dengan stack yang sudah direncanakan (Bun + <code>bun:sqlite</code> + JSONL yang sudah ada dari Fase 5) dan ditambah panel RAM proses yang tidak dimiliki siapa pun. Combo fallback bisa diatur user sebagai <b>model virtual bernama di file config</b> &mdash; lebih enak dari 9Router yang editnya dashboard-only &mdash; dengan mekanik pemicu dan cooldown meniru OMP. Frustrasi per model bisa diukur lokal secara gratis (regex + sinyal perilaku), judge LLM-nya opsional dan berbayar-terukur; dan karena <b>tidak ada agent yang menindaklanjuti sinyal frustrasi menjadi saran ganti model</b>, lapis saran itulah pembeda nomor empat agent ini. Ketiganya masuk plan sebagai: Fase 6 yang diperluas (combo), Fase 12 (dashboard stats + RAM), dan Fase 13 (frustrasi + saran switch).</p>
+    </div>
+  </section>
+
+  <!-- ============ RISET DISCORD RPC ============ -->
+  <section class="block" id="riset-rpc">
+    <h2><span class="no">A3</span> Riset penutup 2: Discord Rich Presence yang lengkap</h2>
+    <p class="sub">Riset 7&ndash;8 Nov 2026 atas dokumentasi resmi Discord (RPC + Social SDK), tool presence yang sudah ada (VSCord, presence.nvim, claude-presence, claude-rpc, opencode-rich-presence), plugin Orca jondmarien, dan proyekmu sendiri <code>orca-discord-rpc</code>. Ini yang menambah Fase 14 ke plan.</p>
+    <div class="grid-3">
+      <div class="card">
+        <h3>1. Cara kerja: IPC lokal, tanpa token, tanpa OAuth</h3>
+        <ul class="tight">
+          <li><b>Discord RPC itu IPC lokal, bukan API jaringan dan bukan bot.</b> Prosesmu bicara ke Discord <em>desktop</em> di mesin yang sama: Windows lewat named pipe <code>\\?\pipe\discord-ipc-{0..9}</code>, Linux/macOS lewat unix socket (<code>$XDG_RUNTIME_DIR</code> &rarr; <code>$TMPDIR</code> &rarr; <code>$TMP</code> &rarr; <code>$TEMP</code> &rarr; <code>/tmp</code>, urutan persis begitu). Indeks 0&ndash;9 dicoba berurutan; tidak ada yang terbuka berarti Discord tidak jalan, dan itu keadaan normal. Discord di browser tidak bisa menerima RPC. Transport WebSocket lokal (<code>ws://127.0.0.1:6463..6472</code>) sudah deprecated, jangan dibangun di atasnya.</li>
+          <li><b>Protokolnya kecil:</b> header 8 byte (opcode + panjang payload, little-endian) lalu JSON UTF-8. Opcode 0 = handshake <code>{"v": 1, "client_id": "&hellip;"}</code>, opcode 1 = frame perintah termasuk <code>SET_ACTIVITY</code>, opcode 2 = close, 3/4 = ping/pong. Presence dihapus dengan <code>SET_ACTIVITY</code> ber-<code>activity</code> null.</li>
+          <li><b>Presence-only tidak butuh autentikasi sama sekali.</b> Panduan Social SDK resmi menyatakan Rich Presence bisa disetel tanpa autentikasi; syaratnya hanya Discord desktop jalan dan Application ID yang valid. Alur OAuth <code>AUTHORIZE</code>/<code>AUTHENTICATE</code> itu untuk set perintah RPC penuh (voice, guild, notifikasi), bukan untuk presence. <b>Jangan pernah meminta atau menyimpan client secret atau token user/bot</b> &mdash; tool yang minta token user itu wilayah self-bot yang dilarang Discord; desain IPC lokal tidak memegang kredensial apa pun.</li>
+          <li><b>Yang didaftarkan di Developer Portal:</b> satu Application (namanya jadi baris <code>Playing &lt;nama&gt;</code> di kartu, jadi namai sesuai agent), Application ID-nya (= Client ID, publik, aman disematkan di klien), dan art assets di Rich Presence &rarr; Art Assets: disarankan 1024&times;1024, maks 300 aset per app, key otomatis di-lowercase oleh portal. Alternatif upload: URL gambar eksternal (<code>mp:</code>/https). Tidak perlu bot user, tidak perlu redirect URI.</li>
+          <li><b>Syarat sisi user:</b> Settings &rarr; Activity Privacy di Discord harus aktif, kalau tidak kartu diam-diam tidak tampil ke orang lain. Ini langkah troubleshooting nomor satu, bukan bug kita.</li>
+        </ul>
+        <p class="srcs">Sumber: <a href="https://docs.discord.com/developers/topics/rpc">Discord RPC docs</a> &middot; <a href="https://docs.discord.com/developers/discord-social-sdk/development-guides/setting-rich-presence">Social SDK &mdash; Setting Rich Presence</a></p>
+      </div>
+      <div class="card">
+        <h3>2. Batas keras kartunya: dua baris teks, itu saja</h3>
+        <ul class="tight">
+          <li><b>Langit-langitnya kecil dan tetap:</b> dua baris teks (<code>details</code> dan <code>state</code>, masing-masing <b>2&ndash;128 karakter</b>, string 1 karakter tidak valid), dua slot gambar dengan tooltip (<code>large_image</code>/<code>large_text</code> dan <code>small_image</code>/<code>small_text</code>, tooltip maks 128 karakter), satu timer, satu field party <code>(current of max)</code>, dan <b>maks 2 tombol URL</b>. Tidak ada API field kustom: semua yang mau ditampilkan agent (model, tool, token, biaya, subagent) harus <em>dikodekan</em> ke dua baris itu, tooltip, atau party.</li>
+          <li><b>Timer:</b> <code>timestamps.start</code> (detik unix) menghitung naik (<code>42:17 elapsed</code>) dan harus nilai yang sama di setiap update, kalau berubah timer ke-reset. <code>timestamps.end</code> mengganti tampilan jadi hitung mundur dan menimpa semantik elapsed &mdash; untuk countdown budget kedengarannya menarik tapi tidak bisa dilabeli sebagai budget dan mengorbankan timer sesi, jadi plan ini pakai start saja; sisa budget ditulis sebagai teks di <code>state</code>.</li>
+          <li><b>Tombol tidak terlihat oleh pemiliknya.</b> Dokumentasi resmi: tombol presence hanya tampil ke user <em>lain</em>; pemilik tidak pernah melihat tombolnya sendiri di profilnya. &ldquo;Tombolku hilang&rdquo; adalah perilaku yang diharapkan &mdash; uji pakai akun kedua. Tombol juga praktisnya hanya jalan untuk URL https publik.</li>
+          <li><b>Party untuk worker: bisa, tapi opt-in.</b> <code>party.size = [running, max]</code> dirender sebagai <code>(3 of 5)</code> menempel di baris state &mdash; satu-satunya hitungan terstruktur yang Discord punya. Risikonya semantik: party menjanjikan grup orang yang bisa di-join. Proyekmu sendiri menghindari party dan memakai sufiks <code>+1</code> di baris details untuk pane agent tambahan, nol ambiguitas. Plan ini meniru itu sebagai default; party mode jadi opt-in dengan <code>privacy: PRIVATE</code>, id party acak per sesi, dan <b>tanpa join secret selamanya</b> (sesi CLI tidak bisa di-join; secret palsu membuat tombol Join rusak di profil user).</li>
+          <li><b>Rate limit: 1 update per 15 detik</b> menurut dokumentasi Rich Presence resmi, dan SDK resmi mengantrekan update di dalam jendela itu. Klien IPC mentah <em>tidak</em> dapat antrean gratis, jadi coalescer-nya wajib kita bangun sendiri: dedupe payload sama, interval minimum 15 detik, flush trailing-edge (yang terbaru menang). Angka komunitas yang lebih cepat (5 per 20 detik dari satu proyek OpenCode; 5 per 60 detik itu limit <em>bot gateway</em>, permukaan yang beda) tidak mengalahkan angka resmi ini.</li>
+        </ul>
+        <p class="srcs">Sumber: <a href="https://discord.com/developers/docs/social-sdk/classdiscordpp_1_1Activity.html">Social SDK &mdash; Activity class reference</a> &middot; <a href="https://github.com/anothergenz/discord-api-docs/blob/HEAD/docs/rich_presence/How_To.md">Rich Presence How-To (1 update / 15 detik)</a></p>
+      </div>
+      <div class="card">
+        <h3>3. Library: hand-roll menang, dan proyekmu sendiri buktinya</h3>
+        <ul class="tight">
+          <li><b>Rekomendasi: hand-roll klien IPC-nya</b> (kurang lebih 150&ndash;250 baris: penemuan path 0&ndash;9, framing, handshake, <code>SET_ACTIVITY</code>, reconnect), atau pakai <code>@xhayper/discord-rpc</code> hanya selama prototyping. <code>orca-discord-rpc</code> milikmu sudah membuktikan jalur hand-roll ini di produksi: Node built-ins saja, <b>nol dependensi runtime npm</b>, bundle &plusmn;63 KB dibanding &plusmn;1,4 MB bundle SDK sebelumnya. Satu ekstensi VS Code juga mengganti <code>@xhayper/discord-rpc</code> dengan klien hand-roll dan melepas &plusmn;12 paket transitif (<code>undici</code>, <code>ws</code>) yang tidak pernah dipakai.</li>
+          <li><b><code>@xhayper/discord-rpc</code> adalah satu-satunya opsi TypeScript yang kredibel</b> bila library dipakai (fork <code>discordjs/RPC</code> dengan type safety; Socket.dev mencatat v1.3.0 &plusmn;6 bulan lalu, dan VSCord memasang <code>^1.3.0</code>). Keanehannya terdokumentasi: harus panggil <code>login()</code>, bukan <code>connect()</code> (yang tidak pernah memancarkan <code>ready</code>), dan instance yang dibuang harus dipensiunkan penuh karena <code>login()</code> ulang di instance yang sama membocorkan listener. Paket asli <code>discord-rpc</code> basi (rilis terakhir &plusmn;2 tahun lalu); Game SDK sudah legacy dan diarahkan Discord ke Social SDK, dan keduanya SDK native untuk game &mdash; bukan untuk CLI TypeScript/Bun.</li>
+          <li><b>Reconnect selalu kode aplikasi, bukan library:</b> pola yang terbukti adalah backoff eksponensial 1&ndash;30 detik atau retry datar 30 detik, pindai ulang indeks pipe 0&ndash;9 tiap percobaan (Discord bisa kembali di indeks berbeda), dan kirim ulang state terakhir begitu <code>READY</code>. Mode gagal yang harus ditangani: Discord belum mulai saat agent jalan, Discord restart di tengah sesi, Discord ditutup (presence hilang bersama pipe-nya), dan socket setengah mati yang menerima tulisan tapi tidak pernah membalas.</li>
+          <li><b>Satu ketidakpastian yang jujur: binary Bun di Windows.</b> Bun menargetkan kompatibilitas <code>node:net</code> dan named pipe Windows memang masuk cakupannya, tapi ada bug historis (issue #13042, connect named pipe gagal <code>ENOENT</code> di Bun 1.1.20 padahal skrip yang sama jalan di Node) dan area ini baru dirombak Bun belakangan. <em>Tidak ditemukan sumber yang memverifikasi klien Discord IPC apa pun di dalam binary <code>bun build --compile</code> di Windows</em> &mdash; jadi plan ini mewajibkan spike setengah hari dulu (Fase 14, tugas 1) sebelum bentuk final modul diputuskan. Jalan cadangannya berurutan: API native <code>Bun.connect({unix})</code>, lalu sidecar skrip Node/Bun kecil yang di-spawn binary utama.</li>
+          <li><b>Bentuk proses: in-process untuk v1.</b> Daemon/tray itu lahir dari keterbatasan host: Claude Code tidak bisa meng-host modul ini (hook-nya proses berumur pendek, jadi claude-presence terpaksa daemon + file bridge), dan exe Orca mendahului plugin host-nya. Agent ini milik kita sendiri, jadi modul in-process adalah default yang benar; ekstraksi daemon hanya dipertimbangkan lagi bila agregasi multi-proses jadi fitur utama. Satu peringatan dari catatan migrasimu sendiri: dua provider presence jalan bersamaan membuat kartu flip-flop antar state &mdash; tegakkan satu instance.</li>
+        </ul>
+        <p class="srcs">Sumber: <a href="https://github.com/meryzennn/orca-discord-rpc">orca-discord-rpc (proyekmu)</a> &middot; <a href="https://github.com/xhayper/discord-rpc">@xhayper/discord-rpc</a> &middot; <a href="https://socket.dev/npm/package/@xhayper/discord-rpc/versions/1.3.0">Socket.dev &mdash; v1.3.0</a> &middot; <a href="https://bun.sh/reference/node/net">Bun &mdash; node:net reference</a> &middot; <a href="https://support-dev.discord.com/hc/en-us/articles/30125671534359-Migrating-from-the-Legacy-Game-SDK-to-the-Discord-Social-SDK">Discord &mdash; migrasi Game SDK ke Social SDK</a></p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>4. Yang ditampilkan agent (bukan editor), dan contoh kartunya</h3>
+      <div class="grid-2" style="margin-top:6px">
+        <div>
+          <p style="margin:0 0 6px;color:var(--ink-2)"><b style="color:var(--ink)">Aturan petanya: <code>details</code> = yang sedang dilakukan agent sekarang; <code>state</code> = konteks sesi yang awet; tooltip = luapan; party = worker (opt-in saja).</b> Baseline editor (file, ikon bahasa, workspace, jumlah problem) sebagian besar tidak relevan untuk CLI agent; yang menggantikannya adalah model, tool, dan status &mdash; persis yang dipilih tool agent yang sudah ada: claude-presence menampilkan nama model termasuk tier konteks (<code>Opus 5 (1M context)</code>), token sesi, estimasi biaya (ditandai <code>~</code> bila hasil estimasi), dan aktivitas dari event tool (<code>Write/Edit &rarr; Editing app.tsx</code>, <code>Bash &rarr; Running terminal command</code> &mdash; nama tool-nya, <em>bukan</em> perintahnya), plus status Waiting setelah turn selesai atau 2 menit senyap.</p>
+          <table class="spec">
+            <thead><tr><th>Datum agent</th><th>Slot Discord</th></tr></thead>
+            <tbody>
+              <tr><td>Status + aksi sekarang</td><td><code>details</code> + ikon <code>small_image</code>: <code>Working &mdash; editing src/auth.ts</code>, <code>Planning &mdash; &hellip;</code>, <code>Orchestrating &mdash; 3 workers running</code></td></tr>
+              <tr><td>Menunggu persetujuan</td><td><code>details</code> + ikon waiting khusus &mdash; state bernilai tertinggi, karena ini yang dilihat user dari HP saat agent-nya berhenti menunggu dia</td></tr>
+              <tr><td>Model / nama combo</td><td>Tooltip <code>large_text</code>, atau ekor <code>state</code> bila harus terlihat di daftar member (tooltip tidak tampil di daftar ringkas)</td></tr>
+              <tr><td>Token sesi</td><td>Ekor <code>state</code>, format ringkas: <code>&middot; 128k tok</code></td></tr>
+              <tr><td>Biaya / sisa budget</td><td>Ekor <code>state</code> (<code>&middot; ~$0.70</code>, <code>~</code> = estimasi) &mdash; tapi mati secara default, lihat privasi</td></tr>
+              <tr><td>Proyek &middot; branch</td><td>Kepala dan tengah <code>state</code>, keduanya ter-gate privasi</td></tr>
+              <tr><td>Waktu sesi</td><td><code>timestamps.start</code> tetap per sesi agent; tidak ada timer kedua untuk per-task</td></tr>
+              <tr><td>Link repo</td><td><code>buttons[0]</code> &ldquo;View Repository&rdquo;, hanya remote https publik</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <p style="margin:0 0 6px;color:var(--ink-2)"><b style="color:var(--ink)">Arbitrase multi-sesi dan mode coordinator.</b> Satu proses: agregat token/biaya = jumlah semua worker, status = state worker berprioritas tertinggi (<code>waiting-for-approval &gt; error &gt; working &gt; planning &gt; idle</code>). Banyak proses agent independen di satu mesin: hanya satu yang boleh memegang kartu atau kartunya flip-flop &mdash; v1 cukup last-active-wins yang teredam alami oleh coalescer 15 detik; lockfile leader, lalu daemon agregator ala opencode-rich-presence, adalah tangga berikutnya.</p>
+          <pre><code>Playing &lt;NamaAgent&gt;                    &larr; nama app di portal
+Working &mdash; editing discord/presence.ts  &larr; details
+&#128193; my-repo &middot; sonnet-5 &middot; 128k tok &middot; ~$0.70  &larr; state (biaya ON)
+[besar: logo agent] [kecil: ikon working,
+   tooltip "claude-sonnet-5 &middot; combo: fast"]
+42:17 elapsed                          &larr; timestamps.start
+[ View Repository ]                    &larr; buttons[0]
+
+Mode coordinator:
+Orchestrating &mdash; 3 workers &middot; 1 waiting approval
+&#128193; my-repo &middot; opus-5 (coordinator) &middot; 412k tok
+(3 of 5)  &larr; hanya bila party mode opt-in aktif</code></pre>
+          <p style="margin:10px 0 0;color:var(--ink-2)">Dengan semua default privasi yang direkomendasikan (proyek nyala, branch mati, biaya mati), kartunya menyusut jadi dua baris bersih: <code>Working &mdash; running tests</code> dan <code>&#128193; my-repo &middot; sonnet-5 &middot; 128k tok</code>.</p>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>5. Privasi: presence itu siaran publik, jadi kontrolnya dirancang dari awal</h3>
+      <p style="margin:0 0 6px;color:var(--ink-2)">Kartu ini tampil ke <b style="color:var(--ink)">seluruh daftar teman dan semua server bersama user</b>, terus-menerus selama sesi. Semua tool yang matang konvergen ke kontrol yang sama &mdash; mode privasi/incognito global, matikan per workspace/proyek, dan toggle per field &mdash; karena kebocoran nama proyek/file adalah keluhan nomor satu di semua ekosistem (VSCord punya privacy mode + daftar ignore, JetBrains akhirnya membuat nama proyek opt-in &ldquo;untuk menghindari kebocoran informasi&rdquo;, claude-presence tidak pernah menampilkan proyek atau branch sama sekali, pluginmu punya Incognito di status bar). Default yang disintesis riset:</p>
+      <table class="spec">
+        <thead><tr><th>Datum</th><th>Default</th><th>Alasan</th></tr></thead>
+        <tbody>
+          <tr><td>Status + kata kerja tool generik</td><td>Nyala</td><td>Inti fiturnya; tidak memuat konten user</td></tr>
+          <tr><td>Model / nama combo, token sesi</td><td>Nyala</td><td>Sensitivitas rendah; semua tool agent menampilkannya</td></tr>
+          <tr><td>Estimasi biaya / budget</td><td><b>Mati</b></td><td>Informasi finansial; opt-in eksplisit (<code>showCost</code>)</td></tr>
+          <tr><td>Nama proyek / repo</td><td>Nyala + Incognito + opt-out per proyek</td><td>Kontrol yang paling diminta di semua ekosistem; satu tombol Incognito menukarnya jadi <code>Private Project</code> dan menyembunyikan branch, nama file, dan tombol repo sekaligus</td></tr>
+          <tr><td>Nama branch</td><td><b>Mati</b></td><td>Branch membocorkan ID tiket, nama klien, codename fitur</td></tr>
+          <tr><td>Nama file</td><td>Basename saja, bisa dimatikan, mati di Incognito</td><td>Path penuh membocorkan struktur direktori; pola sensitif (<code>.env</code>, <code>*secret*</code>) disembunyikan otomatis</td></tr>
+          <tr><td>Argumen tool (perintah shell, query, URL, potongan prompt)</td><td><b>Tidak pernah</b></td><td>Perintah rutin memuat token dan hostname internal; tampilkan kata kerjanya saja</td></tr>
+          <tr><td>Tombol repo</td><td>Hanya remote https publik; sembunyi di Incognito</td><td>Tombol adalah tautan publik dari profil user ke repo</td></tr>
+        </tbody>
+      </table>
+      <p class="note">Tidak ditemukan dokumen kebijakan konten RPC khusus dari Discord; yang berlaku adalah aturan autentikasi/token di dokumentasi developer plus praktik para peer di atas. Mekanismenya sendiri adalah fitur resmi yang terdokumentasi, jadi pekerjaan kepatuhannya adalah default privasi ini, bukan izin khusus.</p>
+      <p class="srcs">Sumber: <a href="https://github.com/backyarddd/claude-presence/blob/HEAD/README.md">claude-presence</a> &middot; <a href="https://claude-rpc.com/">claude-rpc</a> &middot; <a href="https://github.com/engix3/opencode-rich-presence/blob/HEAD/AGENTS.md">opencode-rich-presence</a> &middot; <a href="https://www.onorca.dev/plugins/jondmarien/orca-discord-presence">Orca catalog &mdash; Rich Presence for Discord (jondmarien, &ldquo;every field is opt-in&rdquo;)</a> &middot; <a href="https://deepwiki.com/narcisbugeag/vscord/4-features">VSCord &mdash; features</a> &middot; <a href="https://plugins.jetbrains.com/plugin/23420-discord-integration-v2">JetBrains Discord Integration V2</a> &middot; <a href="https://github.com/andweeb/presence.nvim">presence.nvim</a></p>
+    </div>
+    <div class="verdict">
+      <span class="lbl">Vonis final riset</span>
+      <p><b>Bisa, dan bentuknya sudah jelas.</b> Discord RPC untuk agent ini adalah <b>modul in-process hand-rolled</b> (nol dependensi runtime, meniru yang sudah terbukti di <code>orca-discord-rpc</code> milikmu) yang diberi makan event loop, dengan coalescer 15 detik, reconnect backoff, dan fail-silent total. Isi kartunya mengganti baseline editor dengan data khas agent: status dan kata kerja tool di <code>details</code>, proyek &middot; model &middot; token di <code>state</code>, ikon status di gambar kecil, timer sesi dari <code>timestamps.start</code>, dan tombol repo bila remote-nya publik. Privasi adalah bagian dari desain, bukan tambahan: biaya dan branch mati secara default, argumen tool tidak pernah tampil, ada Incognito satu tombol dan opt-out per proyek. Dua hal yang masih terbuka dan ditulis apa adanya di plan: perilaku named pipe di binary <code>bun build --compile</code> Windows belum terverifikasi di sumber mana pun (wajib spike dulu), dan apakah Discord menegakkan limit 15 detik di sisi klien untuk IPC mentah (dibuang atau diantrekan) tidak terdokumentasi &mdash; coalescer kita dirancang seolah update di dalam jendela itu hilang. Masuk plan sebagai <b>Fase 14</b>.</p>
+    </div>
+  </section>
+
+  <!-- ============ RISET APPEARANCE ============ -->
+  <section class="block" id="riset-appearance">
+    <h2><span class="no">A4</span> Riset penutup 3: appearance, status line, dan profil ringan Oh My Pi / Pi</h2>
+    <p class="sub">Riset 7&ndash;8 Nov 2026 atas dokumentasi resmi omp.sh (themes, settings, using), dokumen tema upstream Pi, dokumentasi status line Claude Code, dan pengukuran pihak ketiga soal berat Oh My Pi. Kepercayaan: tinggi untuk tema dan konfigurasi status line (dokumen resmi), sedang untuk angka ringan &mdash; tidak ada benchmark resmi, semua angka di bawah adalah pengukuran atau estimasi pihak ketiga dan dilabeli begitu. Ini yang menambah Fase 15 dan menutup plan di 16 fase (0&ndash;15).</p>
+    <div class="grid-3">
+      <div class="card">
+        <h3>1. Tema: format Pi/OMP &mdash; satu file JSON, <code>vars</code> + <code>colors</code></h3>
+        <ul class="tight">
+          <li><b>OMP punya &plusmn;100 nama tema</b>: 98 palet di <code>defaults/</code> (mis. <code>dark-catppuccin</code>, <code>dark-tokyo-night</code>, <code>dark-gruvbox</code>, <code>light-paper</code>) plus dasar <code>dark</code>/<code>light</code>, per audit v17.2.12 (Sep 2026); jumlahnya terus bertambah, dan dokumen resminya sendiri bilang daftar di <code>/settings</code> adalah katalog otoritatif untuk versi yang terpasang &mdash; jangan menyalin nama dari rilis lain.</li>
+          <li><b>Dua slot, bukan satu tema &ldquo;system&rdquo;:</b> di <code>~/.omp/agent/config.yml</code> ada <code>theme.dark</code> (default <code>titanium</code>) dan <code>theme.light</code> (default <code>light</code>); OMP memilih slot yang cocok dengan latar terminal. Ganti tema lewat <code>/settings</code> &rarr; Appearance &rarr; Dark/Light Theme dengan <b>pratinjau langsung</b> (Enter mempertahankan, Esc memulihkan); tidak ada perintah <code>/theme</code> di OMP saat ini (itu UX Pi lama).</li>
+          <li><b>Deteksi terang/gelap:</b> latar yang dilaporkan terminal lewat <b>OSC 11</b>, fallback <code>COLORFGBG</code>, dan <b>dievaluasi ulang selagi TUI jalan</b> &mdash; mengganti penampilan terminal/OS menukar slot secara langsung.</li>
+          <li><b>Tema kustom:</b> satu file JSON per tema di <code>~/.omp/agent/themes/&lt;name&gt;.json</code>, berisi <code>name</code>, palet <code>vars</code>, peta <code>colors</code> token semantik, dan blok <code>export</code> opsional untuk ekspor HTML. Nilai warna: <code>#RRGGBB</code> | indeks 256 warna | nama var (boleh bersarang) | <code>""</code> (default terminal). File kustom yang aktif <b>di-hot-reload</b> saat disimpan (debounce singkat; simpan yang rusak mempertahankan versi baik terakhir; file tidak valid saat startup jatuh ke <code>dark</code> bawaan). Dua keanehan yang dicatat apa adanya: <b>tema bawaan menang bila namanya bertabrakan dengan file kustom</b>, dan <b>file tema lokal proyek tidak dipindai</b> OMP sama sekali (direktori <code>.omp/themes/</code> diabaikan) &mdash; divergensi yang disengaja dari Pi.</li>
+          <li><b>OMP mewajibkan 66 token</b> di <code>colors</code>: 51 token Pi + <b>13 token khusus status line</b> (<code>statusLineSep</code>, <code>statusLineModel</code>, <code>statusLinePath</code>, <code>statusLineGitClean/Dirty</code>, <code>statusLineContext</code>, <code>statusLineSpend</code>, <code>statusLineStaged/Dirty/Untracked</code>, <code>statusLineOutput</code>, <code>statusLineCost</code>, <code>statusLineSubagents</code>) + <code>statusLineBg</code> + <code>pythonMode</code>. Skemanya <code>additionalProperties: false</code>: <b>satu kunci asing saja menenggelamkan seluruh file kustom ke fallback</b> &mdash; tepi tajam yang sengaja tidak ditiru plan ini.</li>
+          <li><b>Upstream Pi lebih ramping:</b> tepat dua bawaan (<code>dark</code> default, <code>light</code>), <b>51 token wajib</b> (11 core, 11 latar &amp; konten, 10 markdown, 3 diff, 9 syntax, 6 border thinking, 1 <code>bashMode</code>), pasangan terang/gelap ditulis di dalam satu string tema (<code>pi --use-theme light/dark</code>), dan penemuannya lebih luas: <code>~/.pi/agent/themes/*.json</code>, <b>tema proyek <code>.pi/themes/*.json</code></b> (hanya proyek tepercaya), dan tema yang dibagikan sebagai <b>paket berisi JSON saja</b> lewat entri <code>pi.themes</code> di <code>package.json</code> &mdash; tema komunitas (Catppuccin, Dracula, Nord, varian Gruvbox) memang cuma file data, tanpa kode. OpenCode menyelesaikan terang/gelap dengan cara ketiga: pasangan <code>{dark, light}</code> per warna di dalam satu file tema.</li>
+        </ul>
+        <p class="srcs">Sumber: <a href="https://omp.sh/docs/themes">omp.sh/docs/themes</a> &middot; <a href="https://omp.sh/docs/settings">omp.sh/docs/settings</a> &middot; <a href="https://github.com/weidu12123/liyuan/blob/HEAD/packages/coding-agent/docs/themes.md">Pi &mdash; docs/themes.md (51 token)</a> &middot; <a href="https://github.com/krikchaip/dotfiles/blob/HEAD/home/dot_pi/agent/packages/oh-my-pi-themes/docs/research/2026-08-10.md">Audit registri tema OMP (98 + dark/light)</a></p>
+      </div>
+      <div class="card">
+        <h3>2. Status line: OMP pakai segmen bawaan, Claude Code pakai perintah eksternal</h3>
+        <ul class="tight">
+          <li><b>Isi default OMP</b> (dokumen resmi &ldquo;Using omp&rdquo;): model aktif + level thinking, mode kerja, path, keadaan Git, pemakaian konteks, biaya, dan nama sesi; terminal sempit menghilangkan atau memendekkan segmen. State Plan, Goal, Vibe, Loop, Fast, kolaborasi, PR, dan jendela rate-limit provider (segmen <code>usage</code>) muncul di sini saat relevan. Baris bawaan yang ter-render contohnya: <code>3.3s &#9475; ~/proj &#9475; main *1 +1 &#9475; 54%/1M &#9475; Opus 4.8 &#9475; med &#9475; 25.9 tok/s</code>.</li>
+          <li><b>Bisa dikonfigurasi penuh lewat segmen:</b> preset <code>default | minimal | compact | full | nerd | ascii | custom</code>; dengan <code>preset: custom</code> user mengisi <code>statusLine.leftSegments</code> / <code>rightSegments</code> dan menyetel <code>statusLine.segmentOptions</code> di <code>~/.omp/agent/config.yml</code>; opsi lain: <code>statusLine.separator</code> (<code>powerline | powerline-thin | slash | pipe | block | none | ascii</code>), <code>transparent</code>, <code>sessionAccent</code>, <code>showHookStatus</code>, dan pengukur konteks terpisah <code>statusLine.contextLine</code> (mode <code>percentage | annotated | embedded</code>, sejak v17.4.0). ID segmen persis per preset tidak dienumerasi di dokumen publik; <code>omp config list</code> adalah otoritasnya.</li>
+          <li><b>Tidak ada hook perintah eksternal bawaan di OMP maupun Pi.</b> Yang ada adalah API ekstensi in-process warisan Pi: <code>ctx.ui.setStatus(key, text)</code> (slot bernama di footer), <code>ctx.ui.setWidget(...)</code>, dan <code>ctx.ui.setFooter(factory)</code> (mengganti footer seluruhnya). Buktinya celah ini terasa: ekstensi pihak ketiga <code>omp-custom-statusline</code> <b>menciptakan ulang kontrak Claude Code</b> untuk OMP &mdash; config sendiri <code>~/.omp/agent/statusline.config.json</code> (<code>command</code>, <code>timeoutMs</code> default 2000, <code>intervalMs</code> default 5000) atau env <code>OMP_STATUSLINE_CMD</code>. Footer Pi sendiri satu baris tetap (cwd + branch, sesi, token &uarr;/&darr;, cache <code>R</code>/<code>CH</code>, biaya, konteks %; kanan: model + thinking; warna border editor mengkodekan level thinking) dan hanya bisa diubah lewat ekstensi. OpenCode tidak punya keduanya: tidak ada status line perintah eksternal dan tidak ada config daftar segmen; ekstensibilitasnya slot plugin TUI.</li>
+          <li><b>Kontrak Claude Code adalah desain referensinya</b> (dokumen resmi): di <code>settings.json</code>, <code>"statusLine": {"type": "command", "command": "~/.claude/statusline.sh", "padding": 0, "refreshInterval": 10, "hideVimModeIndicator": false}</code>. Perintah dijalankan lewat shell; <b>JSON di stdin &rarr; apa pun yang dicetak ke stdout ditampilkan</b> (multi-baris = multi baris; ANSI dan hyperlink OSC 8 dihormati), tanpa biaya token model. Perintah <code>/statusline</code> bisa membangkitkan skripnya untuk user.</li>
+          <li><b>Payload stdin Claude Code</b> mencakup: <code>model.id</code>/<code>display_name</code>, <code>effort.level</code>, <code>thinking.enabled</code>, <code>cwd</code> + <code>workspace.*</code> (termasuk <code>repo.{host,owner,name}</code>), <code>cost.total_cost_usd</code>/<code>total_duration_ms</code>/<code>total_lines_added/removed</code>, <code>context_window.*</code> (<code>context_window_size</code>, <code>used_percentage</code>, <code>remaining_percentage</code>, <code>current_usage</code> per komponen), <code>rate_limits.five_hour</code>/<code>seven_day</code>/<code>spend_limit</code>, <code>session_id</code>/<code>session_name</code>/<code>transcript_path</code>, <code>pr.*</code>, <code>worktree.*</code>, <code>vim.mode</code>. <b>Gap yang diketahui: <code>git.branch</code> TIDAK ada di payload</b> &mdash; skrip terpaksa menjalankan <code>git</code> sendiri; plan ini memperbaikinya (Fase 15).</li>
+          <li><b>Semantik refresh-nya teruji tempur:</b> jalan saat sesi mulai/resume, pesan assistant baru, <code>/compact</code> selesai, mode izin/vim berubah, setting perintah berubah, <code>refreshInterval</code> lewat (min 1 detik), dan momen reset rate-limit/cache tiba; update di-<b>debounce 300 ms</b> dan trigger baru <b>membatalkan skrip yang sedang jalan</b>. Ukuran terminal tidak terdeteksi dari dalam skrip (stdout ditangkap), jadi Claude Code menyetel env <code>COLUMNS</code>/<code>LINES</code>; dokumennya juga memperingatkan agar kerja mahal seperti <code>git status</code> di-cache &plusmn;5 detik.</li>
+        </ul>
+        <p class="srcs">Sumber: <a href="https://omp.sh/docs/using">omp.sh/docs/using</a> &middot; <a href="https://github.com/svperfecta/oh-my-pi/blob/HEAD/docs/settings.md">OMP docs/settings.md (kunci statusLine.*)</a> &middot; <a href="https://code.claude.com/docs/en/statusline">Claude Code &mdash; status line (resmi)</a> &middot; <a href="https://github.com/yorailevi/omp-custom-statusline/blob/HEAD/README.md">omp-custom-statusline</a> &middot; <a href="https://github.com/lie14f/pi-mono/blob/HEAD/packages/coding-agent/docs/extensions.md">Pi &mdash; docs/extensions.md (setStatus/setFooter)</a></p>
+      </div>
+      <div class="card">
+        <h3>3. Seberapa ringan sebenarnya: Pi ramping by design, OMP tidak</h3>
+        <ul class="tight">
+          <li><b>Tidak ada benchmark startup/RAM resmi dari OMP maupun Pi.</b> Semua angka di kartu ini pengukuran atau estimasi pihak ketiga &mdash; jangan dikutip sebagai angka vendor. Yang bisa diverifikasi keras: kebutuhan runtime (Pi: Node &ge;22.19; OMP: Bun &ge;1.3.14 untuk jalur Bun/npm, atau binary prebuilt tanpa runtime) dan ukuran binary.</li>
+          <li><b>OMP itu maksimalis:</b> fork Pi dengan &plusmn;1,36 juta baris TypeScript + &plusmn;170 ribu baris Rust (hitungan satu review; sumber lain melaporkan rentang 55&ndash;170 ribu untuk Rust-nya saja), dan <b>binary prebuilt tunggalnya terukur &plusmn;183 MB</b> (v18.0.7, linux-x64). Installer-nya sendiri rapi: tepat satu file ke <code>~/.local/bin/omp</code>, terverifikasi SHA-256, tanpa mengutak-atik dotfile.</li>
+          <li><b>Estimasi baseline memorinya bukan nol:</b> analisis arsitektur pihak ketiga mengestimasi <b>40&ndash;90 MB RSS hanya untuk runtime Bun + heap JS</b> sebelum sesi tumbuh &mdash; dan sesi OMP disimpan utuh di memori sebagai objek JS, jadi RSS tumbuh bersama sesi. Di mesin analis yang sama, <code>stats.db</code>-nya 77 MB dan folder sesinya 1,4 GB di disk.</li>
+          <li><b>Startup-nya tidak instan:</b> satu pengukuran user berpengalaman mencatat <code>omp -p</code> membayar <b>&plusmn;8 detik overhead startup</b> sebelum request berangkat (anekdot satu mesin untuk mode headless yang memuat provider, MCP, ekstensi, dan penemuan LSP; TUI interaktif bisa berbeda). Bug nyata lain: satu server MCP yang tidak responsif pernah menahan UI-ready OMP selama <b>30,282 detik</b> (timeout MCP penuh); perbaikannya me-race koneksi melawan jendela <b>250 ms</b> dan menunda server yang belum ter-cache. Pelajarannya: pemuatan periferal yang malas adalah <em>fitur startup</em>, bukan optimasi.</li>
+          <li><b>Pi upstream memang ramping by design:</b> harness TypeScript minimal, <b>4 tool inti</b>, <b>system prompt &lt;1.000 token</b>. Kesederhanaan itu sendiri strategi performanya &mdash; lebih sedikit kode dimuat, lebih sedikit konteks dirakit, lebih sedikit yang di-render per putaran.</li>
+          <li><b>Yang membuat keduanya cepat di jalur panas:</b> tanpa Electron (aplikasi Electron membawa Chromium sendiri: installer tipikal 80&ndash;150 MB dan 150&ndash;300 MB RAM idle sebelum kode user jalan); <b>rendering diferensial</b> pi-tui (komponen <code>render(width): string[]</code>, hanya rentang baris yang berubah dicat ulang, dibungkus <b>CSI 2026 synchronized output</b>); OMP melangkah lebih jauh dengan frame-plan yang <b>memensiunkan riwayat yang sudah committed ke scrollback terminal dan membebaskan buffer-nya</b>; inti Rust OMP mengerjakan grep/glob/diff/highlighting/hitung token/PTY dan bash + coreutils in-process; dan pemuatan malas di mana-mana (LSP on-demand secara default, <code>fetch.preconnect()</code> menghangatkan DNS/TCP/TLS selagi prompt dirakit).</li>
+          <li><b>Lantai runtime Bun memang rendah</b> (benchmark independen, Bun 1.4.3 vs Node 24/26, median hyperfine): skrip kosong <b>3,3 ms vs 28,5 ms</b>; menjalankan file <code>.ts</code> <b>3,8 ms vs 62,6 ms</b>; RSS idle server <code>node:http</code> <b>23 MB vs 58 MB</b>; aplikasi Hono di bawah beban <b>36 MB vs 105 MB</b>. Tapi lantai runtime bukan startup agent: yang mendominasi adalah graf modul sendiri, penemuan config, dan handshake periferal &mdash; makanya budget di Fase 15 meninggalkan headroom besar di atas lantai ini, bukan menyalinnya.</li>
+        </ul>
+        <p class="srcs">Sumber: <a href="https://trove.xin/en/detailed/oh-my-pi">Pengukuran binary OMP 183 MB (v18.0.7)</a> &middot; <a href="https://github.com/freepeak/xdev/blob/HEAD/docs/research/2026-09-09-omp-pi-architecture-go-rebuild.md">Analisis arsitektur &amp; berat OMP/Pi</a> &middot; <a href="https://github.com/ismaelga/omp-config/blob/HEAD/agent/skills/reviewing-model-pins/traps.md">Anekdot startup omp -p &plusmn;8 dtk</a> &middot; <a href="https://github.com/can1357/oh-my-pi/pull/2140">Fix stall MCP 30 dtk &rarr; race 250 ms</a> &middot; <a href="https://dev.to/fabwaseem/bun-vs-nodejs-in-2026-bun-14-vs-node-24-and-26-benchmarked-4pab">Benchmark Bun vs Node</a></p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>4. Panduan desain yang diadopsi plan ini: potong tokennya, pakai dua lapis, tulis budgetnya</h3>
+      <div class="grid-2" style="margin-top:6px">
+        <div>
+          <p style="margin:0 0 6px;color:var(--ink-2)"><b style="color:var(--ink)">Tema: adopsi format Pi, jangan adopsi 66 token OMP di hari pertama.</b> Skema v1 &plusmn;38 token: core Pi (11) dipertahankan; markdown dipangkas dari 10 ke 6 (sisanya default ke <code>muted</code>/<code>text</code>/<code>border</code> di kode); syntax 9 dipertahankan utuh (highlighting terlihat rusak dengan lebih sedikit); status line cukup <b>5 token terkonsolidasi</b> (<code>statusLineBg</code>, <code>statusLineModel</code>, <code>statusLinePath</code>, <code>statusLineGitClean</code>, <code>statusLineGitDirty</code>) dan memakai ulang <code>accent/muted/dim/success/warning/error</code> untuk konteks/biaya/subagent, bukan 13 token terpisah; mode cukup 2 (<code>bashMode</code> + satu <code>thinkingAccent</code>) &mdash; trik Pi/OMP mengkodekan level thinking di border editor dipertahankan, tapi tidak dengan 7 warna per level.</p>
+          <ul class="tight">
+            <li><b>Bawaan yang dikirim: 5, bukan 100</b> &mdash; <code>dark</code> (palet rumah), <code>light</code>, pasangan Catppuccin (Mocha + Latte), Tokyo Night, dan Gruvbox atau Nord; plus tema <code>system</code> (kebanyakan warna <code>""</code>) yang gratis dan paling tangguh di terminal aneh. 98 tema OMP adalah konsekuensi fork matang berkontributor; lima yang bagus + file user mengalahkan 98 yang medioker untuk v1 solo.</li>
+            <li><b>Perilaku file yang diperbaiki dari OMP:</b> token yang hilang <b>diisi dari tema dasar</b> dan kunci tak dikenal hanya diperingatkan &mdash; tidak pernah menenggelamkan file (anti-pola <code>additionalProperties: false</code> OMP). Tema proyek <b>didukung</b> (proyek tepercaya saja, meniru Pi; OMP yang tidak memindai proyek adalah yang menyimpang). Preset simbol <code>unicode | nerd | ascii</code> dicuri dari OMP sebagai setting global, bukan per tema, di v1.</li>
+          </ul>
+        </div>
+        <div>
+          <p style="margin:0 0 6px;color:var(--ink-2)"><b style="color:var(--ink)">Status line: dua lapis, keduanya v1.</b> Lapis 1 segmen bawaan dengan layout default: kiri <code>model+thinking &middot; mode &middot; cwd &middot; git (branch +staged ~unstaged ?untracked)</code>, kanan <code>context ▓▓░░ 54%/200k &middot; ↑12k ↓3.4k &middot; $0.08 &middot; budget $4.92 left &middot; session &middot; ● status</code>. Segmen <code>budget</code> (sisa budget dari cap <code>budget.sessionUsd</code>/<code>dailyUsd</code> Fase 6, merah di bawah 10%) adalah segmen khas agent ini: tidak ada agent yang disurvei yang mengirimkannya sebagai segmen kelas satu &mdash; Claude Code pun hanya mengekspos spend limit di balik gateway, Pi/OMP menampilkan belanja, bukan sisa. Lapis 2 hook perintah eksternal menggantikan baris lapis 1 (model mental lebih sederhana daripada baris ekstra ala Claude Code), menyalin nama field Claude Code agar skrip dan pengetahuan yang ada bisa pindah, dan memperbaiki dua gap-nya: <b><code>git.branch</code> + hitungan staged/unstaged/untracked disertakan</b> dan <b>blok <code>budget</code> disertakan</b>, jadi skrip tidak perlu shell-out ke git.</p>
+          <table class="spec">
+            <thead><tr><th>Budget performa v1</th><th>Target</th><th>Cara mengukur di Bun</th></tr></thead>
+            <tbody>
+              <tr><td>Cold start ke prompt interaktif</td><td><b>&lt;300 ms</b> p50 (stretch &lt;150 ms)</td><td><code>hyperfine</code> untuk lantai boot + run TUI ter-skrip di PTY; flag <code>--startup-trace</code> mencatat mark <code>performance.now()</code> (config dimuat / tema dimuat / render pertama / siap)</td></tr>
+              <tr><td>Overhead headless one-shot</td><td><b>&lt;500 ms</b> (di luar TTFT provider)</td><td>Waktu sampai byte pertama terkirim ke provider di startup trace</td></tr>
+              <tr><td>Idle RSS (TUI terbuka, sesi kosong)</td><td><b>&lt;100 MB</b> (stretch &lt;70 MB)</td><td><code>/usr/bin/time -v</code> atau <code>process.memoryUsage().rss</code>; lantai Bun sendiri &plusmn;18&ndash;23 MB, sisanya graf modul + state sesi kita</td></tr>
+              <tr><td>Pertumbuhan RSS per 1.000 pesan</td><td><b>&lt;20 MB</b> dan terbatas</td><td>Replay sesi JSONL besar sambil sampling RSS; ditegakkan dengan state sesi berjendela (hanya entri pasca-batas compaction yang panas) dan streaming file &gt;8 MiB</td></tr>
+              <tr><td>Latensi ketikan &rarr; cat</td><td><b>&lt;16 ms</b> p95 (satu frame)</td><td>Rendering diferensial + frame CSI 2026; tes PTY memastikan echo karakter ada di frame berikutnya; redraw penuh dilarang kecuali resize/render pertama</td></tr>
+              <tr><td>Perintah eksternal status line</td><td>&le;200 ms tipikal, dibunuh di <code>timeoutMs</code> (default 2000)</td><td>Desain debounce + cancel + timeout; git di-cache TTL 1&ndash;5 detik; skrip lambat dicatat sekali per sesi</td></tr>
+              <tr><td>Render streaming</td><td>&le;30 paint/detik</td><td>Delta token dikoales per tick seperti pi-tui; tidak pernah render per token</td></tr>
+              <tr><td>Ukuran binary ter-compile</td><td><b>&lt;60 MB</b> (stretch &lt;40 MB)</td><td><code>du -h</code> artefak rilis di CI; 183 MB OMP adalah harga LSP+debugger+browser+98 tema+7 crate Rust &mdash; kalau kita mendekatinya, ada baterai yang harus dinamai</td></tr>
+            </tbody>
+          </table>
+          <p class="note">Aturan penjaga budget: semua antrean terbatas, semua sink output tool berukuran tetap (head+tail, sisanya tumpah ke file), blok transkrip yang committed dipensiunkan dan string-nya dibebaskan (terminal adalah arsipnya), dan tes asap CI gagal bila idle RSS atau waktu <code>--version</code> regresi &gt;20%. Ukur di mesin paling lambat yang didukung, bukan mesin dev.</p>
+        </div>
+      </div>
+      <p class="srcs">Sumber panduan: bagian 5 laporan riset ini (rekomendasi berbasis temuan di atas) &middot; <a href="https://deepwiki.com/badlogic/pi-mono/5-pi-tui:-terminal-ui-library">pi-tui &mdash; rendering diferensial</a> &middot; <a href="https://blog.openreplay.com/comparing-electron-tauri-desktop-applications/">Kontras jejak Electron</a></p>
+    </div>
+    <div class="verdict">
+      <span class="lbl">Vonis final riset</span>
+      <p><b>Bisa, dan appearance bukan alasan untuk jadi berat.</b> Sistem temanya meniru format Pi yang sudah terbukti (satu JSON per tema, <code>vars</code> + <code>colors</code>, hot reload, slot dark/light) dengan token dipangkas dari 66 ke &plusmn;38 dan perilaku fallback yang lebih ramah daripada OMP. Status line-nya mengambil yang terbaik dari dua dunia yang tidak dimiliki satu pun agent secara lengkap: konfigurasi segmen bawaan ala OMP <em>dan</em> hook perintah eksternal ala Claude Code (yang harus diciptakan ulang pihak ketiga untuk OMP, dan tidak ada di Pi maupun OpenCode), plus segmen sisa budget sebagai pembeda. Dan &ldquo;ringan&rdquo; ditulis sebagai <b>budget yang dites di CI</b> &mdash; cold start &lt;300 ms, idle RSS &lt;100 MB, binary &lt;60 MB &mdash; karena risetnya menunjukkan klaim ringan OMP itu relatif: binary terukur &plusmn;183 MB dan baseline RSS terestimasi 40&ndash;90 MB. Agent ini bisa secara kredibel lebih ringan justru karena tidak membawa baterai-baterai OMP. Masuk plan sebagai <b>Fase 15</b>.</p>
+    </div>
+  </section>
+
+  <!-- ============ ROADMAP ============ -->
+  <section class="block" id="roadmap">
+    <h2><span class="no">B</span> Peta rilis</h2>
+    <p class="sub">Satu fase dikerjakan sampai kriteria selesainya hijau sebelum lanjut. Tidak ada fase yang dikerjakan paralel dengan fase lain.</p>
+    <div class="road">
+      <div class="r">
+        <div class="ver">v0.1</div>
+        <div class="fr">FASE 0 &ndash; 3 &middot; INTERNAL</div>
+        <p>Skeleton, model layer + preset 9Router, agent loop dan tool inti, permissions dan mode. Agent pertama kali bisa kerja end-to-end.</p>
+      </div>
+      <div class="r">
+        <div class="ver">v0.2</div>
+        <div class="fr">FASE 4 &ndash; 7 &middot; PEMBEDA AKTIF</div>
+        <p>Context management, sesi yang bisa dipindah, hard budget + <b>combo fallback bernama</b>, dan verification gate. Di sinilah agent ini mulai beda dari pasaran.</p>
+      </div>
+      <div class="r">
+        <div class="ver">v0.3</div>
+        <div class="fr">FASE 8 &ndash; 10</div>
+        <p>MCP client, antarmuka headless dan TUI Ink, lalu primitif subagent sebagai fondasi orchestration.</p>
+      </div>
+      <div class="r">
+        <div class="ver">v0.4</div>
+        <div class="fr">FASE 11 &middot; ORCHESTRATION</div>
+        <p>Coordinator-worker ala Orca: Run/Task/Dispatch, worktree per writer, integrasi manual terpicu user.</p>
+      </div>
+      <div class="r">
+        <div class="ver">v0.5</div>
+        <div class="fr">FASE 12 &ndash; 13 &middot; OBSERVABILITY</div>
+        <p>Dashboard <code>/stats</code> lokal ala Oh My Pi (usage per model + RAM proses + mesin) dan tracking frustrasi per model dengan saran ganti model.</p>
+      </div>
+      <div class="r">
+        <div class="ver">v0.6</div>
+        <div class="fr">FASE 14 &middot; DISCORD RPC</div>
+        <p>Discord Rich Presence lengkap: status agent, model, token, dan timer sesi di profil Discord lewat IPC lokal hand-rolled, dengan privasi per field dan mode Incognito.</p>
+      </div>
+      <div class="r">
+        <div class="ver">v0.7</div>
+        <div class="fr">FASE 15 &middot; APPEARANCE &amp; RINGAN</div>
+        <p>Sistem tema ala Pi yang dipangkas (&plusmn;38 token, 5 bawaan, file user + proyek, hot reload, slot dark/light), status line dua lapis (segmen terkonfigurasi termasuk sisa budget + hook perintah eksternal kompatibel Claude Code), dan budget performa tertulis yang jadi gerbang CI.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PRINSIP ============ -->
+  <section class="block" id="prinsip">
+    <h2><span class="no">C</span> Prinsip yang tidak boleh dilanggar</h2>
+    <p class="sub">Berlaku di semua fase. Kalau sebuah tugas di file eksekusi nanti bertabrakan dengan prinsip ini, prinsip yang menang.</p>
+    <div class="principles">
+      <div class="principle">
+        <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg></div>
+        <p><b>Windows kelas satu sejak hari pertama.</b> Mesin utama yang dipakai Windows, dan agent pasaran kronis rusak di sana. Uji di Windows pada tiap fase, bukan di akhir.</p>
+      </div>
+      <div class="principle">
+        <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 17l6-5-6-5"/><path d="M12 19h8"/></svg></div>
+        <p><b>Headless mode bersih.</b> Stdout hanya untuk output terstruktur (JSONL), semua log ke stderr. Skrip yang mem-parse output tidak boleh ketemu sampah log.</p>
+      </div>
+      <div class="principle">
+        <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+        <p><b>Edit file harus aman.</b> Read-before-write, cek hash atau isi tidak berubah sejak dibaca, match unik, format edit per model bila perlu. Jangan pernah pakai unified diff mentah bernomor baris.</p>
+      </div>
+      <div class="principle">
+        <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-3.6 8-10V5l-8-3-8 3v7c0 6.4 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg></div>
+        <p><b>File test dilindungi, ditegakkan runner.</b> Agent tidak boleh mengubah file test dan config test yang masuk daftar lindung lewat tool apa pun, termasuk bash. Runner memeriksa hash-nya; tool edit yang menolak hanyalah lapis pertama. Ini fondasi verification gate di Fase 7.</p>
+      </div>
+      <div class="principle">
+        <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+        <p><b>Tiap fase selesai dengan verifikasi yang bisa dijalankan</b>: test suite, perintah contoh dengan output yang diharapkan. Bukan "seharusnya jalan".</p>
+      </div>
+      <div class="principle">
+        <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+        <p><b>Bite-sized, tidak one-shot.</b> Tiap tugas dipecah jadi langkah kecil dengan file yang disebut eksplisit, langkah verifikasi, dan commit di akhir tugas.</p>
+      </div>
+      <div class="principle">
+        <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 14l4-4"/><path d="M3.3 19a10 10 0 1 1 17.4 0"/></svg></div>
+        <p><b>Performa adalah gerbang sejak Fase 0.</b> Waktu <code>--version</code>, idle RSS, dan ukuran binary diukur di CI tiap PR dan dibandingkan dengan baseline. Dependensi runtime baru butuh alasan tertulis di issue atau ADR.</p>
+      </div>
+      <div class="principle">
+        <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v12"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg></div>
+        <p><b>Spec di repo, status di Issues.</b> Plan dan file MD per fase adalah spesifikasi: berversi dan diubah lewat PR. GitHub Issues adalah status kerja: satu issue per task, ditutup oleh PR. Issue menautkan ke spec, tidak menyalin langkah-langkahnya.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FASE ============ -->
+  <nav class="phasenav" aria-label="Filter fase per rilis">
+    <div class="wrap">
+      <button type="button" data-filter="all" aria-pressed="true">Semua fase</button>
+      <button type="button" data-filter="v01" aria-pressed="false">v0.1 &middot; Fase 0-3</button>
+      <button type="button" data-filter="v02" aria-pressed="false">v0.2 &middot; Fase 4-7</button>
+      <button type="button" data-filter="v03" aria-pressed="false">v0.3 &middot; Fase 8-10</button>
+      <button type="button" data-filter="v04" aria-pressed="false">v0.4 &middot; Fase 11</button>
+      <button type="button" data-filter="v05" aria-pressed="false">v0.5 &middot; Fase 12-13</button>
+      <button type="button" data-filter="v06" aria-pressed="false">v0.6 &middot; Fase 14</button>
+      <button type="button" data-filter="v07" aria-pressed="false">v0.7 &middot; Fase 15</button>
+      <button type="button" data-filter="diff" aria-pressed="false">Pembeda saja</button>
+    </div>
+  </nav>
+
+  <section class="block" id="fase" style="padding-top:26px">
+    <h2><span class="no">D</span> Rencana per fase</h2>
+    <p class="sub">Tiap fase: tujuan, tugas kecil bernomor, dan kriteria selesai. Kriteria selesai adalah gerbang: fase berikutnya tidak mulai sebelum gerbang ini hijau.</p>
+
+    <!-- FASE 0 -->
+    <article class="phase" id="fase-0" data-rel="v01">
+      <div class="phase-head">
+        <div class="phase-num">FASE 0</div>
+        <div class="tt">
+          <h3>Skeleton repo dan harness</h3>
+          <p class="goal">Repo hidup, CLI kosong jalan, harness test dan mock provider siap.</p>
+        </div>
+        <div class="tags"><span class="tag rel">v0.1</span></div>
+      </div>
+      <h4>Tugas kecil</h4>
+      <ol class="tasks">
+        <li><span class="rv ch">diubah</span>Inisialisasi paket TypeScript <b>Bun-only</b> (ADR-001), <code>tsconfig</code> strict, linter + formatter, <code>bun test</code>.</li>
+        <li><span class="rv ch">diubah</span>Entry CLI dengan parser argumen; <code>--version</code> dan <code>--help</code> jalan dan hanya memuat modul minimum (semua yang berat di-lazy-import sejak hari pertama).</li>
+        <li><span class="rv ch">diubah</span>Loader config <b>JSONC</b> (ADR-005), global + proyek (proyek menang), skema zod, field <code>version</code> untuk migrasi; config kosong valid.</li>
+        <li><b>Mock provider server</b> untuk test: server HTTP lokal yang meniru endpoint OpenAI-compatible dan Anthropic dengan respons terekam. Dipakai semua fase berikutnya.</li>
+        <li><span class="rv">baru</span><b>Spike ukuran dan startup (setengah hari):</b> hello-world <code>bun build --compile</code> di Linux, Windows, dan macOS; catat ukuran binary, waktu <code>--version</code>, dan idle RSS ke <code>docs/perf/baseline.json</code>. Target absolut binary ditetapkan dari angka ini (ADR-006).</li>
+        <li><span class="rv">baru</span><b>Spike renderer (setengah hari, ADR-003):</b> prototipe transkrip streaming + input di atas paket pi-tui dan di atas renderer diferensial minimal sendiri; ukur latensi ketikan dan ukuran bundle; perbarui <code>docs/adr/</code> dengan hasilnya.</li>
+        <li><span class="rv">baru</span><b>Deteksi Git Bash di Windows</b> (ADR-004): path dari config &rarr; lokasi instal Git yang umum &rarr; <code>PATH</code>; bila tidak ada, error yang bisa ditindaklanjuti.</li>
+        <li><span class="rv ch">diubah</span>Skrip <code>test</code>, <code>typecheck</code>, <code>lint</code>, <code>build</code>, <code>perf</code> di package.json; CI GitHub Actions matriks Linux + Windows dengan <b>job perf</b> yang gagal bila waktu <code>--version</code>, idle RSS, atau ukuran binary regresi &gt;20% dari baseline.</li>
+        <li><span class="rv">baru</span><b>Alur kerja repo:</b> <code>CLAUDE.md</code>, <code>.gitattributes</code> (fixture CRLF tidak dinormalisasi), template issue/PR, label + milestone per fase, proteksi branch <code>main</code> (paket starter di bagian G).</li>
+      </ol>
+      <div class="done-when">
+        <span class="lbl">Kriteria selesai</span>
+        <p><code>agent --help</code> jalan di Windows dan Linux; test suite hijau; mock server merespons di kedua bentuk protokol; <code>docs/perf/baseline.json</code> terisi dan job perf CI terbukti gagal pada regresi yang disimulasikan; ADR-003 dan ADR-006 diperbarui dengan data spike; di Windows tanpa Git, CLI memberi error Git Bash yang jelas.</p>
+      </div>
+    </article>
+
+    <!-- FASE 1 -->
+    <article class="phase" id="fase-1" data-rel="v01">
+      <div class="phase-head">
+        <div class="phase-num">FASE 1</div>
+        <div class="tt">
+          <h3>Model layer dan provider, termasuk preset 9Router</h3>
+          <p class="goal">Agent bisa memanggil model lewat endpoint mana pun dan tahu batas konteks aslinya.</p>
+        </div>
+        <div class="tags"><span class="tag rel">v0.1</span></div>
+      </div>
+      <h4>Tugas kecil</h4>
+      <ol class="tasks">
+        <li>Tipe pesan kanonik internal + fungsi transformasi ke format wire OpenAI dan Anthropic, dengan test unit per transformasi (system prompt, tool args JSON object vs string, tool_result, stop reason, streaming delta).</li>
+        <li><span class="rv ch">diubah</span><b>Adapter OpenAI-compatible sendiri</b> (ADR-002): <code>fetch</code> + parser SSE, delta tool call yang terpotong lintas chunk, <code>stream_options.include_usage</code>, <code>AbortSignal</code> untuk batal.</li>
+        <li><span class="rv ch">diubah</span><b>Adapter Anthropic Messages sendiri</b>: wajib <code>max_tokens</code>, blok thinking + signature disimpan dan di-echo apa adanya ke Anthropic, header versi API.</li>
+        <li><span class="rv ch">diubah</span>Blok config provider ala OpenCode (JSONC) + resolusi apiKey dari env; penemuan model via <code>GET /v1/models</code>.</li>
+        <li><b>Preset 9Router bawaan</b>: baseURL <code>http://localhost:20128/v1</code>, apiKey dari dashboard, model <code>ag/*</code> (Antigravity), <code>kr/*</code>, dan lain-lain terdokumentasi; override context window per model.</li>
+        <li><span class="rv">baru</span><b>Katalog metadata model:</b> snapshot <code>models.dev</code> dibundel saat build (context window, harga, kapabilitas tool/reasoning/vision); override lokal di config selalu menang; ID yang tidak dikenal mendapat nilai konservatif + peringatan.</li>
+        <li><span class="rv">baru</span><b>Catat model aktual:</b> field model dari respons disimpan terpisah dari model yang diminta, karena 9Router atau gateway lain bisa fallback diam-diam di sisinya.</li>
+        <li><span class="rv ch">diubah</span>Penghitung token: heuristik karakter-per-token per keluarga model, dikalibrasi otomatis dari field <code>usage</code> respons; <code>js-tiktoken</code> hanya opsional dan dimuat malas.</li>
+        <li>Probe kapabilitas di awal sesi: model tanpa tool calling native jatuh ke tangga fallback (prompted JSON tool call, lalu mode chat-only dengan peringatan keras).</li>
+      </ol>
+      <div class="done-when">
+        <span class="lbl">Kriteria selesai</span>
+        <p>Satu prompt yang sama menghasilkan tool call yang benar lewat (a) mock OpenAI, (b) mock Anthropic, (c) 9Router lokal asli bila tersedia; estimasi token dalam 15% dari <code>usage</code> yang dilaporkan provider pada fixture uji.; fixture respons yang field model-nya berbeda dari yang diminta tercatat sebagai model aktual; tidak ada dependensi AI SDK di <code>package.json</code>.</p>
+      </div>
+    </article>
+
+    <!-- FASE 2 -->
+    <article class="phase" id="fase-2" data-rel="v01">
+      <div class="phase-head">
+        <div class="phase-num">FASE 2</div>
+        <div class="tt">
+          <h3>Agent loop dan tool inti</h3>
+          <p class="goal">Agent bisa menyelesaikan tugas file sederhana end-to-end.</p>
+        </div>
+        <div class="tags"><span class="tag rel">v0.1</span></div>
+      </div>
+      <h4>Tugas kecil</h4>
+      <ol class="tasks">
+        <li><span class="rv ch">diubah</span>Loop manual <code>while(true)</code>, satu panggilan model per putaran; streaming ke REPL; Esc/Ctrl+C membatalkan lewat <code>AbortSignal</code>, termasuk menutup tool_use yang menggantung dengan tool_result sintetis &ldquo;dibatalkan&rdquo;.</li>
+        <li>Registry tool tunggal (tool bawaan dan tool MCP masuk registry yang sama nanti).</li>
+        <li><span class="rv ch">diubah</span>Tool read (penomoran baris dan batas), write, edit (read-before-write + cek hash + match unik). <b>Windows:</b> gaya newline asli dipertahankan (CRLF tetap CRLF; match dilakukan setelah normalisasi lalu ditulis balik dengan gaya aslinya), BOM dipertahankan, path dinormalisasi (separator, huruf drive, case-insensitive).</li>
+        <li><span class="rv ch">diubah</span>Tool bash: Git Bash di Windows (ADR-004), timeout, output ditangkap, environment dibersihkan; batal atau timeout <b>membunuh seluruh pohon proses</b> (process group di POSIX, <code>taskkill /T /F</code> di Windows).</li>
+        <li>Tool grep (ripgrep), glob, list.</li>
+        <li>Tool webfetch dan todowrite.</li>
+        <li>Pemotongan output tool: maks 2000 baris / 50KB, sisanya tumpah ke file dan dirujuk.</li>
+        <li><span class="rv ch">diubah</span><b>Diagnostik pasca-giliran, bukan per edit:</b> perintah opsional per proyek di config (mis. <code>tsc --noEmit</code>, <code>cargo check</code>) dijalankan sekali di akhir giliran yang mengubah file, dengan timeout; hasilnya disuntik ke giliran berikutnya. Tidak ada klien LSP di v1 (backlog).</li>
+        <li><span class="rv">baru</span><b>Checkpoint file dan <code>/rewind</code>:</b> sebelum write/edit pertama per giliran, isi file yang akan disentuh disalin ke penyimpanan checkpoint sesi; <code>/rewind</code> memulihkan file dan memotong percakapan ke titik pilihan. Efek samping bash tidak bisa di-rewind dan UI menyatakannya.</li>
+        <li><span class="rv">baru</span><b>REPL minimal (readline) + headless dasar <code>--print</code></b> (teks akhir ke stdout, log ke stderr): antarmuka sementara sampai TUI Fase 9, sekaligus tempat prompt persetujuan Fase 3.</li>
+        <li><span class="rv">baru</span><b>Eval harness v0:</b> 15&ndash;30 tugas kecil di repo fixture (perbaiki bug, tambah fungsi + test) dijalankan headless terhadap model asli lewat 9Router atau API; skor dari test tiap tugas; hasil dicatat di <code>docs/evals/</code>. Bukan gerbang CI (non-deterministik dan berbayar), tapi wajib dijalankan sebelum menutup fase yang menyentuh prompt, tool, atau loop.</li>
+      </ol>
+      <div class="done-when">
+        <span class="lbl">Kriteria selesai</span>
+        <p>Skenario uji end-to-end di mock: agent membaca file, mengedit, menjalankan test fixture, dan berhenti dengan jawaban teks; skenario batal (Esc) tidak merusak sesi. Fixture file CRLF tetap CRLF setelah edit; fixture timeout bash membunuh proses cucu di Windows dan Linux; <code>/rewind</code> memulihkan file fixture; baseline eval pertama tercatat.</p>
+      </div>
+    </article>
+
+    <!-- FASE 3 -->
+    <article class="phase" id="fase-3" data-rel="v01">
+      <div class="phase-head">
+        <div class="phase-num">FASE 3</div>
+        <div class="tt">
+          <h3>Permissions dan mode</h3>
+          <p class="goal">Tidak ada aksi mengejutkan; user memegang kendali.</p>
+        </div>
+        <div class="tags"><span class="tag rel">v0.1</span></div>
+      </div>
+      <h4>Tugas kecil</h4>
+      <ol class="tasks">
+        <li>Aturan allow/ask/deny per tool dari config, urutan evaluasi deny &gt; ask &gt; allow.</li>
+        <li><span class="rv ch">diubah</span>Mode default, acceptEdits, plan, bypass (pola mode Claude Code yang disederhanakan). Bypass hanya lewat flag eksplisit per sesi, dan checkpoint Fase 2 tetap aktif di mode itu.</li>
+        <li>Mode plan: hanya boleh menulis file rencana di folder khusus; tool edit lain ditolak.</li>
+        <li><span class="rv ch">diubah</span>File <code>.env</code> dan pola sensitif: deny bawaan untuk read/write/edit; perintah bash yang argumennya cocok pola sensitif (terdeteksi parser) jatuh ke ask.</li>
+        <li><span class="rv ch">diubah</span><b>Parsing perintah bash dengan tree-sitter-bash (WASM, dimuat malas) sejak awal:</b> pisahkan <code>&amp;&amp;</code>, <code>||</code>, <code>;</code>, <code>|</code>, subshell, <code>$( )</code>, backtick, dan redirect, lalu nilai per perintah. Apa pun yang tidak bisa diurai dengan yakin (<code>eval</code>, <code>bash -c</code>, ekspansi variabel di posisi perintah) jatuh ke ask, tidak pernah ke allow. Regex bukan pengaman.</li>
+        <li><span class="rv ch">diubah</span>Prompt persetujuan di REPL Fase 2 (lalu TUI Fase 9) dengan pilihan sekali / selalu untuk pola ini / tolak.</li>
+        <li><span class="rv">baru</span><b>Konten tak tepercaya:</b> output webfetch (dan MCP di Fase 8) dibungkus dan diberi label tak tepercaya di prompt; di mode default, tool yang mengubah file atau menjalankan perintah pada giliran yang sama setelah konten tak tepercaya masuk selalu ask, walau ada aturan allow.</li>
+      </ol>
+      <div class="done-when">
+        <span class="lbl">Kriteria selesai</span>
+        <p>Matriks test izin lulus (per tool x per mode x per aturan); mode plan terbukti tidak bisa mengedit kode pada fixture.; fixture perintah majemuk yang menyembunyikan aksi (<code>$(&hellip;)</code>, <code>bash -c</code>, redirect ke path sensitif) terbukti jatuh ke ask.</p>
+      </div>
+    </article>
+
+    <!-- FASE 4 -->
+    <article class="phase" id="fase-4" data-rel="v02">
+      <div class="phase-head">
+        <div class="phase-num">FASE 4</div>
+        <div class="tt">
+          <h3>Context management</h3>
+          <p class="goal">Sesi panjang tidak meledak dan tidak lupa hal penting.</p>
+        </div>
+        <div class="tags"><span class="tag rel">v0.2</span></div>
+      </div>
+      <h4>Tugas kecil</h4>
+      <ol class="tasks">
+        <li><span class="rv ch">diubah</span>Perakitan system prompt berlapis: blok env (OS, cwd, git status ringkas), instruksi, prompt per provider; prefix stabil di depan demi cache. System prompt dan deskripsi tool disimpan sebagai file berversi di <code>prompts/</code>, bukan string tersebar di kode; tiap perubahan dijalankan lewat eval harness Fase 2 dan hasilnya dicatat.</li>
+        <li>Loader instruksi AGENTS.md lalu CLAUDE.md (hirarki folder), disuntik sebagai instruksi.</li>
+        <li>Pruning bertingkat: (a) potong atau buang output tool lama di atas ambang sekitar 40k token, (b) micro-compact, (c) ringkasan penuh oleh panggilan model terpisah (compaction agent).</li>
+        <li>Ambang autocompact dapat dikonfigurasi (persentase konteks), bukan angka mati.</li>
+        <li>Setelah compaction: suntik ulang instruksi proyek + daftar todo aktif + ringkasan.</li>
+      </ol>
+      <div class="done-when">
+        <span class="lbl">Kriteria selesai</span>
+        <p>Fixture sesi sintetis 300 langkah tetap di bawah ambang konteks setelah compaction (dengan summarizer mock deterministik), dan fakta kunci yang ditandai di fixture terbukti ada di konteks pasca-compact (cek mekanis). Eval &ldquo;ingat fakta setelah compact&rdquo; dengan model asli dijalankan dan skornya dicatat, bukan dijadikan gerbang biner.</p>
+      </div>
+    </article>
+
+    <!-- FASE 5 -->
+    <article class="phase" id="fase-5" data-rel="v02">
+      <div class="phase-head">
+        <div class="phase-num">FASE 5</div>
+        <div class="tt">
+          <h3>Sesi: persistensi, resume, export/import</h3>
+          <p class="goal">Pekerjaan tidak hilang dan bisa dipindah.</p>
+        </div>
+        <div class="tags"><span class="tag rel">v0.2</span></div>
+      </div>
+      <h4>Tugas kecil</h4>
+      <ol class="tasks">
+        <li><span class="rv ch">diubah</span>Format JSONL sesi terdokumentasi: field versi skema di setiap record + migrasi maju; skema v1 ditulis sebagai dokumen publik di repo.</li>
+        <li>Simpan transkrip append-only per sesi di direktori data user; metadata sesi (model, provider, cwd, waktu).</li>
+        <li><span class="rv ch">diubah</span><b>Record mentah per request disimpan apa adanya</b> (fondasi Fase 12 dan 13): provider + model yang diminta <em>dan</em> model aktual dari respons (Fase 1), timestamp, token input/output/cache-read/cache-write/reasoning bila ada, durasi, TTFT, stop reason, panggilan tool &mdash; plus teks pesan user untuk rollup frustrasi nanti. Tidak ada agregat yang disimpan menggantikan record mentah ini.</li>
+        <li><span class="rv">baru</span><b>Redaksi secret sebelum ditulis:</b> nilai env yang bernama rahasia (<code>*KEY*</code>, <code>*TOKEN*</code>, <code>*SECRET*</code>, <code>*PASSWORD*</code>) dan pola umum (kunci API berprefiks, private key PEM) diganti <code>[REDACTED:jenis]</code> di transkrip, export HTML, dan nantinya <code>stats.db</code>.</li>
+        <li><span class="rv">baru</span>Checkpoint/rewind, perpindahan model, dan keputusan persetujuan dicatat sebagai record bertipe (fondasi sinyal perilaku Fase 13).</li>
+        <li>Perintah resume/continue dan fork dari titik mana pun.</li>
+        <li>Export ke JSON portabel + render HTML statis self-hosted untuk dibaca ulang (replay); import dari export yang sama.</li>
+      </ol>
+      <div class="done-when">
+        <span class="lbl">Kriteria selesai</span>
+        <p>Sesi dibuat, di-fork, di-export, di-import di mesin atau folder lain, dan dilanjutkan tanpa kehilangan langkah; format terdokumentasi cukup untuk ditulis ulang oleh pihak ketiga.; fixture output tool berisi API key palsu terbukti ter-redaksi di JSONL dan export.</p>
+      </div>
+    </article>
+
+    <!-- FASE 6 -->
+    <article class="phase star" id="fase-6" data-rel="v02" data-diff="1">
+      <div class="phase-head">
+        <div class="phase-num">FASE 6</div>
+        <div class="tt">
+          <h3>Pembeda 1: hard budget dan combo fallback bernama</h3>
+          <p class="goal">Celah pasar nomor 1 dan 2 ditutup: run yang bisa direm, dan model yang bisa ganti di tengah sesi lewat combo yang diatur user sendiri di file config &mdash; pengemasan nama virtual ala 9Router, mekanik ala <code>retry.fallbackChains</code> OMP.</p>
+        </div>
+        <div class="tags"><span class="tag rel">v0.2</span><span class="tag diff">Pembeda</span></div>
+      </div>
+      <h4>Tugas kecil</h4>
+      <ol class="tasks">
+        <li><span class="rv ch">diubah</span>Akuntansi usage per langkah dan per <b>model aktual</b> (token masuk/keluar/cache); estimasi biaya dari katalog Fase 1 + override; model langganan tanpa harga tercatat N/A.</li>
+        <li><span class="rv ch">diubah</span><b>Budget per run dengan unit default token dan jumlah giliran</b>, yang berlaku untuk semua model termasuk langganan 9Router; dolar opsional dan hanya menghitung model berharga. Aksi saat tembus: berhenti keras, atau turun ke entri lebih murah di combo aktif (langkah setelah turun tetap dihitung ke budget).</li>
+        <li><span class="rv ch">diubah</span><b>Skema combo di file config</b> (JSONC, bisa diedit tangan; bukan dashboard-only seperti 9Router): nama combo, <code>strategy</code> (<code>fallback</code> dulu; <code>round-robin</code> opsional), daftar terurut penyeleksi <code>provider/model</code> yang bebas mencampur provider/langganan/API/gratis, <code>fallbackOn</code> per combo, <code>revertPolicy</code>. Combo satu entri valid sebagai alias; nama combo bisa dipakai di mana pun penyeleksi model bisa dipakai, termasuk mengisi role (<code>default</code>, <code>smol</code>, dst).</li>
+        <li><span class="rv ch">diubah</span><b>Mekanik penelusuran:</b> per entri, retry pendek hanya untuk error transien 502/503/504 (maks 2, backoff 0,5 &rarr; 2 detik); <b>429 langsung pindah entri</b>, kecuali <code>Retry-After</code> &le;5 detik (tunggu sekali); <code>Retry-After</code> yang lebih panjang menjadi durasi cooldown entri itu. Rotasi kredensial di dalam satu provider dicoba sebelum fallback model; kandidat yang sedang cooldown, tanpa kredensial, atau tidak kompatibel diskip; resolusi rantai berdasar spesifisitas (model persis &gt; <code>provider/*</code> &gt; role &gt; <code>default</code>); perubahan config di-reload untuk keputusan fallback berikutnya. Default OMP (10&times; sampai 300 detik) sengaja tidak ditiru: inti combo adalah pindah cepat.</li>
+        <li><b>Kondisi pemicu dibedakan dari error biasa:</b> strategi <code>fallback</code> hanya berjalan pada 429 dan error transien 502/503/504 (plus <code>quota</code> / <code>no-credential</code> bila <code>fallbackOn</code> mengizinkan; mode OMP: <code>any</code> | <code>usage-limit</code> | <code>except-usage-limit</code>); error seperti 400 dikembalikan ke user langsung, tidak menelusuri rantai. Tiap entri ikut satu penelusuran paling banyak sekali (retry pendek di atas termasuk di dalamnya). Kebijakan revert: <code>cooldown-expiry</code> (kembali ke model utama saat cooldown-nya berakhir) atau <code>never</code>.</li>
+        <li><span class="rv">baru</span><b>Normalisasi transkrip saat model berganti:</b> blok thinking bersignature hanya dikirim ke provider dan keluarga model yang sama, selain itu dibuang; ID tool call dipetakan ulang ke format yang diterima target; bila context window target lebih kecil dari pemakaian sekarang, compaction Fase 4 dijalankan sebelum request; user diberi tahu bahwa cache prompt hangus, beserta estimasi biaya tambahannya.</li>
+        <li><span class="rv">baru</span><b>Gagal di tengah streaming:</b> pesan assistant parsial dikeluarkan dari konteks (dicatat di transkrip sebagai <code>aborted</code>), tool yang sudah selesai dieksekusi tidak diulang, dan entri berikutnya melanjutkan dari state terakhir yang ter-commit.</li>
+        <li><span class="rv">baru</span><b>Fallback bersarang:</b> bila entri combo menunjuk combo 9Router (yang fallback sendiri di sisi router), agent memperingatkan sekali dan memakai model aktual dari respons untuk akuntansi dan atribusi.</li>
+        <li>Budget per combo opsional (harian/bulanan, pola dashboard 9Router): saat batas kena, entri berbayar diskip demi entri gratis di combo yang sama.</li>
+        <li>Setiap perpindahan model dicatat di transkrip (dari model apa, ke model apa, pemicunya apa) dan diberitahukan ke user; perintah atau status UI menampilkan sisa budget dan posisi combo saat ini secara live.</li>
+        <li>Preset combo contoh di dokumentasi: satu combo &ldquo;langganan &rarr; murah &rarr; gratis&rdquo; yang menunjuk preset 9Router (termasuk entri <code>ag/*</code>), supaya user bisa menyalin dan mengubah urutannya sendiri.</li>
+      </ol>
+      <pre><code>// config.jsonc — combo sebagai model virtual bernama
+{
+  "combos": {
+    "premium-coding": {
+      "strategy": "fallback",            // fallback | round-robin
+      "models": [
+        "anthropic/claude-opus-4-5",
+        "openai/gpt-5.5",
+        "glm/glm-4.7"
+      ],
+      "fallbackOn": [429, 502, 503, 504, "quota", "no-credential"],
+      "revertPolicy": "cooldown-expiry"
+    },
+    "free-only": { "models": ["kr/claude-sonnet-4.5", "oc/auto"] }
+  },
+  "modelRoles": {
+    "default": "premium-coding",         // nama combo sah di mana pun model sah
+    "smol": "free-only"
+  },
+  "budget": { "sessionTokens": 2000000, "sessionTurns": 200, "sessionUsd": null }
+}</code></pre>
+      <div class="done-when">
+        <span class="lbl">Kriteria selesai</span>
+        <p>Fixture dengan budget kecil membuktikan run berhenti atau turun model persis di ambang; fixture mock yang mengembalikan 429 lalu 503 membuktikan combo berjalan berurutan dan berhenti di model pertama yang sehat, sementara fixture 400 membuktikan rantai <em>tidak</em> ditelusuri; fixture cooldown membuktikan model utama dipakai lagi setelah cooldown berakhir pada <code>revertPolicy: cooldown-expiry</code>; transkrip mencatat semua perpindahannya; tidak ada langkah yang jalan setelah budget habis pada mode berhenti keras. Fixture pindah dari Anthropic (dengan thinking bersignature) ke OpenAI-compatible membuktikan request berikutnya valid; fixture stream terputus di tengah membuktikan tool tidak dieksekusi ulang; fixture 429 dengan <code>Retry-After</code> panjang membuktikan pindah entri tanpa menunggu; budget token berlaku untuk model tanpa harga.</p>
+      </div>
+    </article>
+
+    <!-- FASE 7 -->
+    <article class="phase star" id="fase-7" data-rel="v02" data-diff="1">
+      <div class="phase-head">
+        <div class="phase-num">FASE 7</div>
+        <div class="tt">
+          <h3>Pembeda 2: verification gate</h3>
+          <p class="goal">Agent tidak bisa memproklamirkan selesai tanpa bukti.</p>
+        </div>
+        <div class="tags"><span class="tag rel">v0.2</span><span class="tag diff">Pembeda</span></div>
+      </div>
+      <h4>Tugas kecil</h4>
+      <ol class="tasks">
+        <li><span class="rv ch">diubah</span>Daftar file terlindungi di config: file test <b>dan config test</b> (mis. <code>vitest.config.*</code>, <code>jest.config.*</code>, <code>scripts.test</code> di package.json, fixture). Tool edit/write menolak mengubahnya; karena bash bisa menulis file apa pun, runner juga mengambil snapshot hash file terlindungi di awal tugas.</li>
+        <li>Perintah verifikasi proyek (test/typecheck/lint) didefinisikan di config.</li>
+        <li>Gate di akhir tugas: sebelum agent boleh menyatakan selesai, verifikasi dijalankan oleh runner (bukan oleh model); gagal berarti tugas dikembalikan ke loop dengan output kegagalan, maksimal sekian percobaan, lalu dilaporkan sebagai gagal, bukan sukses.</li>
+        <li><span class="rv">baru</span><b>Cek hash sebelum verifikasi:</b> file terlindungi yang berubah lewat tool apa pun membuat gate gagal dengan alasan &ldquo;file terlindungi diubah&rdquo;; file dipulihkan dari snapshot awal tugas, lalu verifikasi dijalankan atas versi asli. Menambah file test baru boleh; menghapus, <code>.skip</code>, atau <code>.only</code> pada file terlindungi tertangkap oleh hash yang sama.</li>
+        <li>Laporan akhir tugas selalu menyertakan hasil verifikasi terakhir.</li>
+      </ol>
+      <div class="done-when">
+        <span class="lbl">Kriteria selesai</span>
+        <p>Fixture agent yang mengakali test lewat tool edit, lewat bash (<code>sed -i</code>, redirect, <code>git checkout</code>), dan lewat config test (menambah exclude) semuanya terdeteksi, gate gagal, dan file dipulihkan; fixture test gagal membuat gate menolak penyelesaian sampai percobaan habis.</p>
+      </div>
+    </article>
+
+    <!-- FASE 8 -->
+    <article class="phase" id="fase-8" data-rel="v03">
+      <div class="phase-head">
+        <div class="phase-num">FASE 8</div>
+        <div class="tt">
+          <h3>MCP client</h3>
+          <p class="goal">Tool eksternal standar industri tersedia.</p>
+        </div>
+        <div class="tags"><span class="tag rel">v0.3</span></div>
+      </div>
+      <h4>Tugas kecil</h4>
+      <ol class="tasks">
+        <li>Klien MCP (stdio dulu) via <code>@modelcontextprotocol/sdk</code>; server didefinisikan di config.</li>
+        <li>Tool dari server MCP masuk registry yang sama, tunduk pada permission yang sama.</li>
+        <li>Resource dan prompt MCP dipetakan seperlunya (tool adalah prioritas).</li>
+      </ol>
+      <div class="done-when">
+        <span class="lbl">Kriteria selesai</span>
+        <p>Satu server MCP contoh (filesystem atau fetch) terhubung, tool-nya bisa dipanggil agent, dan permission ask bekerja untuk tool tersebut.</p>
+      </div>
+    </article>
+
+    <!-- FASE 9 -->
+    <article class="phase" id="fase-9" data-rel="v03">
+      <div class="phase-head">
+        <div class="phase-num">FASE 9</div>
+        <div class="tt">
+          <h3>Antarmuka: headless lengkap, lalu TUI</h3>
+          <p class="goal">Bisa dipakai skrip dan manusia.</p>
+        </div>
+        <div class="tags"><span class="tag rel">v0.3</span></div>
+      </div>
+      <h4>Tugas kecil</h4>
+      <ol class="tasks">
+        <li><span class="rv ch">diubah</span>Mode headless <code>--print</code> dengan <code>--output-format json</code> (JSONL di stdout, log di stderr), exit code bermakna. Melengkapi headless dasar dari Fase 2.</li>
+        <li><span class="rv ch">diubah</span>TUI v1 di atas renderer diferensial ADR-003 (bukan Ink): transkrip streaming, indikator langkah/tool, prompt persetujuan, input menyela di tengah putaran masuk antrean, Esc membatalkan; blok transkrip yang selesai di-commit ke scrollback terminal sejak awal.</li>
+        <li><span class="rv">baru</span><b>Gerbang latensi TUI masuk CI di sini, bukan di Fase 15:</b> ketikan &rarr; cat &lt;16 ms p95 dan &le;30 paint/detik saat streaming, diukur dengan tes PTY di Linux dan Windows.</li>
+        <li>Perintah garis miring minimal: <code>/model</code>, <code>/budget</code>, <code>/export</code>, <code>/resume</code>, <code>/plan</code>, <code>/build</code>, <code>/rewind</code>.</li>
+      </ol>
+      <div class="done-when">
+        <span class="lbl">Kriteria selesai</span>
+        <p>Skenario headless dipakai dari skrip shell dan output-nya parseable; skenario TUI interaktif lulus uji manual tercatat (checklist di repo) di Windows.; tes PTY latensi ketikan lulus di Linux dan Windows.</p>
+      </div>
+    </article>
+
+    <!-- FASE 10 -->
+    <article class="phase" id="fase-10" data-rel="v03">
+      <div class="phase-head">
+        <div class="phase-num">FASE 10</div>
+        <div class="tt">
+          <h3>Primitif subagent</h3>
+          <p class="goal">Fondasi orchestration, tanpa orchestration dulu.</p>
+        </div>
+        <div class="tags"><span class="tag rel">v0.3</span></div>
+      </div>
+      <h4>Tugas kecil</h4>
+      <ol class="tasks">
+        <li>Subagent sebagai fungsi: context segar (system prompt sendiri + instruksi proyek), menerima brief terstruktur (objektif, format output, tool yang boleh, batasan eksplisit).</li>
+        <li>Definisi agent dalam Markdown + frontmatter (pola <code>.claude/agents</code>): tools, model, maxTurns, permission mode.</li>
+        <li>Batasan keras: konkurensi maks dapat dikonfigurasi (default kecil), kedalaman 1 (subagent tidak bisa membuat subagent), maxTurns dengan pengembalian hasil parsial.</li>
+        <li>Agent bawaan read-only Explore untuk riset codebase.</li>
+        <li>Hanya pesan terakhir subagent yang kembali ke pemanggil, ditambah metadata (langkah, token terpakai).</li>
+      </ol>
+      <div class="done-when">
+        <span class="lbl">Kriteria selesai</span>
+        <p>Tugas riset fixture diselesaikan subagent Explore tanpa menyentuh file; pemanggil menerima ringkasan + metadata; batas kedalaman dan konkurensi terbukti oleh test.</p>
+      </div>
+    </article>
+
+    <!-- FASE 11 -->
+    <article class="phase" id="fase-11" data-rel="v04">
+      <div class="phase-head">
+        <div class="phase-num">FASE 11</div>
+        <div class="tt">
+          <h3>Orchestration v1 (fase lanjutan, setelah Fase 10 stabil)</h3>
+          <p class="goal">Coordinator-worker yang aman untuk satu user.</p>
+        </div>
+        <div class="tags"><span class="tag rel">v0.4</span></div>
+      </div>
+      <h4>Tugas kecil</h4>
+      <ol class="tasks">
+        <li><span class="rv ch">diubah</span>Store SQLite terisolasi (satu modul, <code>bun:sqlite</code>) dengan tabel bergaya Orca: runs, tasks (spec + dependensi), dispatches, messages, gates disederhanakan.</li>
+        <li>Status task: pending, ready, dispatched, completed, failed, blocked; promosi dependensi otomatis (pending ke ready saat dependensi selesai).</li>
+        <li>Protokol penyelesaian bertipe: <code>worker_done</code> tepat satu kali per dispatch, wajib outcome succeeded/failed, ringkasan, filesModified, hasil test; otoritas penyelesaian memeriksa pasangan taskId + dispatchId.</li>
+        <li>Heartbeat worker dari runner; deteksi macet; circuit breaker: task failed setelah 3 kegagalan beruntun.</li>
+        <li>Worktree manager: satu worktree per writer (maks 3 writer paralel), branch bernama konsisten, file scope dideklarasikan di muka per task; reader dan fan-out read-only tanpa worktree.</li>
+        <li>Mode coordinator sebagai mode CLI: memecah objektif menjadi task (dengan brief terstruktur Fase 10), dispatch, menunggu event (worker_done/escalation/question) dengan model blocking wait, dan mengajukan pertanyaan blocking worker sebagai task blocked.</li>
+        <li>Integrasi manual terpicu user: merge worktree satu per satu mengikuti urutan dependensi, test suite dijalankan setelah tiap merge; konflik menghentikan proses dan dilaporkan, tidak pernah diselesaikan diam-diam.</li>
+        <li>Budget token per run orchestration (memakai Fase 6) dan laporan akhir per task.</li>
+      </ol>
+      <div class="done-when">
+        <span class="lbl">Kriteria selesai</span>
+        <p>Skenario fixture 3 task (2 paralel, 1 bergantung) selesai end-to-end: dispatch, heartbeat, worker_done bertipe, integrasi berurutan dengan test hijau setelah tiap merge; skenario konflik terbukti berhenti dan melapor, bukan memaksa.</p>
+      </div>
+    </article>
+
+    <!-- FASE 12 -->
+    <article class="phase" id="fase-12" data-rel="v05">
+      <div class="phase-head">
+        <div class="phase-num">FASE 12</div>
+        <div class="tt">
+          <h3>Dashboard <code>/stats</code> lokal: usage per model + RAM</h3>
+          <p class="goal">Meniru pola omp-stats persis (Bun + SQLite rollup + server lokal), ditambah panel resource proses dan mesin yang tidak dimiliki OMP maupun agent lain.</p>
+        </div>
+        <div class="tags"><span class="tag rel">v0.5</span></div>
+      </div>
+      <h4>Tugas kecil</h4>
+      <ol class="tasks">
+        <li><b>Mesin sinkronisasi:</b> baca JSONL sesi dari Fase 5 secara inkremental (kursor per file tersimpan, file yang tidak berubah diskip, commit atomik supaya sinkronisasi yang terputus tidak menghitung dobel) ke SQLite lewat <code>bun:sqlite</code> di modul terisolasi yang sama dengan Fase 11; tabel rollup per jam untuk pesan, tool, dan sesi; watcher menyinkronkan transkrip yang sedang ditulis.</li>
+        <li><b>Server lokal Bun:</b> perintah <code>stats</code> di shell dan slash command <code>/stats</code> di dalam sesi membuka dashboard yang sama, disajikan <code>Bun.serve</code>, bind default <code>127.0.0.1</code> dengan port default yang bisa diganti (<code>--port</code>) dan bind lain hanya lewat <code>--host</code> eksplisit; URL yang efektif (dari <code>server.url</code> / <code>server.port</code> setelah bind) dicetak ke terminal. Kalau port terisi, pakai dashboard yang sudah jalan atau pilih port bebas. Mode non-dashboard: <code>stats --summary</code> (konsol) dan <code>stats --json</code>, keduanya sinkronisasi dulu baru mencetak.</li>
+        <li><b>API HTTP:</b> <code>GET /api/stats</code>, <code>/api/stats/models</code>, <code>/api/stats/folders</code>, <code>/api/stats/timeseries</code>, <code>/api/status</code>, <code>POST /api/sync</code>, dan <code>GET /api/events</code> sebagai SSE (progres sinkronisasi + versi data); halaman me-revalidasi saat versi data berubah, tanpa tombol refresh.</li>
+        <li><span class="rv">baru</span><b>Keamanan server lokal:</b> tolak request yang header <code>Host</code>-nya bukan <code>127.0.0.1</code>/<code>localhost</code> + port (cegah DNS rebinding); POST hanya dari <code>Origin</code> yang sama; token acak per proses wajib di URL pertama dan ditukar menjadi cookie <code>HttpOnly; SameSite=Strict</code>; tanpa CORS. <code>--host</code> non-loopback hanya dengan token dan peringatan eksplisit, karena halaman Traces memuat isi prompt.</li>
+        <li><b>Halaman dashboard:</b> Overview, Models, Providers, Costs, Requests, Errors, Traces, Tools, Projects, Gain, dan halaman Resource baru (tugas 5). Pilihan rentang waktu membaca rollup per jam, bukan memindai ulang transkrip. Biaya selalu dilabeli &ldquo;estimasi setara API&rdquo;; model langganan tanpa harga publik tampil <code>N/A</code> dan tidak masuk total dolar.</li>
+        <li><b>Metrik per model/provider</b> mengikuti definisi omp-stats: jumlah request; token input/output/cache-read/cache-write; biaya; Tokens/s = <code>output_tokens / (duration/1000)</code>; Cache Rate dan Cache Savings; Error Rate = <code>count(stopReason=error) / total_calls * 100</code>; Avg Latency dan TTFT. Konteks % tetap di footer TUI/status bar, bukan dipindah ke dashboard.</li>
+        <li><b>Panel Resource (pekerjaan baru, tidak ada di OMP):</b> sampler interval 500ms&ndash;1s menyimpan ring buffer pendek. Proses sendiri: <code>process.memoryUsage()</code> dengan <code>rss</code> sebagai angka utama, <code>heapTotal</code>/<code>heapUsed</code>/<code>external</code> sebagai rincian (di Bun boleh ditambah <code>bun:jsc</code> <code>heapStats()</code>); CPU% proses dari selisih dua sampel <code>process.cpuUsage()</code>. Mesin: <code>os.totalmem()</code>/<code>os.freemem()</code> dan CPU% dari diff <code>os.cpus()</code>. Sparkline di footer TUI + seri penuh di halaman Resource.</li>
+        <li><b>Aturan lintas platform untuk panel Resource:</b> di Windows (<code>win32</code>) field load average disembunyikan karena <code>os.loadavg()</code> selalu <code>[0, 0, 0]</code> di sana; angka heap tidak pernah dibandingkan lintas runtime (Bun = heap JavaScriptCore, Node = V8); UI menyatakan eksplisit bahwa RSS proses induk belum termasuk proses anak (shell, server MCP, subagent) &mdash; penjumlahan pohon proses dan pustaka <code>systeminformation</code> adalah peningkatan opsional belakangan, bukan diam-diam dianggap sudah termasuk.</li>
+      </ol>
+      <div class="done-when">
+        <span class="lbl">Kriteria selesai</span>
+        <p>Dari fixture sesi yang diketahui isinya: dashboard lokal terbuka di <code>127.0.0.1</code>, angka per model di halaman Models cocok dengan hitungan tangan dari fixture (token, request, error rate), estimasi biaya dan label <code>N/A</code>-nya benar; sinkronisasi kedua atas file yang sama tidak mengubah angka (idempoten); panel Resource menampilkan RSS proses yang berubah saat fixture membebani memori, dan di Windows tidak ada field load average yang tampil. Uji jalan di Windows dan Linux. Request dengan <code>Host</code> asing atau POST tanpa <code>Origin</code> yang sama ditolak (fixture DNS rebinding/CSRF).</p>
+      </div>
+    </article>
+
+    <!-- FASE 13 -->
+    <article class="phase star" id="fase-13" data-rel="v05" data-diff="1">
+      <div class="phase-head">
+        <div class="phase-num">FASE 13</div>
+        <div class="tt">
+          <h3>Pembeda 3: tracking frustrasi per model + saran ganti model</h3>
+          <p class="goal">Meng-copy lapis pengukuran frustrasinya OMP (yang sudah terbukti), lalu menutup celah yang belum diklaim siapa pun: mengubah sinyal frustrasi menjadi saran ganti model di dalam sesi.</p>
+        </div>
+        <div class="tags"><span class="tag rel">v0.5</span><span class="tag diff">Pembeda</span></div>
+      </div>
+      <h4>Tugas kecil</h4>
+      <ol class="tasks">
+        <li><b>Ekstraksi prosa:</b> dari record pesan user Fase 5, buang fence kode, kode inline, tag XML/HTML, URL, mention file, token bertitik, baris kutipan, penanda gambar, dan escape ANSI sebelum penilaian; yang dinilai hanya prosa sisanya, dengan pencocokan word-boundary case-insensitive.</li>
+        <li><span class="rv ch">diubah</span><b>Sinyal heuristik lokal</b> (regex, gratis, instan, tanpa data keluar mesin) mengikuti set OMP: yelling (kalimat mayoritas CAPS multi-kata), profanity (daftar terkurasasi termasuk varian tersensor; slur identitas dan kata teknis korpus coding dikecualikan), anguish (<code>!!!</code>, <code>noooo</code>, <code>ugh</code>, <code>argh</code>, <code>dude</code>, <code>:(</code>), negation (pembuka <code>no</code>/<code>nope</code>/<code>wrong</code>, <code>makes no sense</code>), repetition (<code>like i said</code>, <code>i already told you</code>, <code>still doesnt</code>), blame (<code>you didn't</code>, <code>why did you</code>, <code>stop X-ing</code> di awal kalimat). <b>Guard:</b> pesan &ge;3 baris prosa dinolkan sinyal emosionalnya. <b>Pola disimpan sebagai leksikon data per bahasa</b> (<code>lexicons/en.json</code>, <code>lexicons/id.json</code>), bukan regex tertanam: minimal Inggris dan Indonesia di v1 (mis. negation <em>salah</em>, <em>bukan gitu</em>; repetition <em>udah gw bilang</em>, <em>kan tadi udah</em>; blame <em>kok kamu</em>, <em>kenapa kamu</em>; anguish <em>astaga</em>, <em>aduh</em>), dan user bisa menambah leksikon sendiri.</li>
+        <li><span class="rv ch">diubah</span><b>Tiga bucket bersarang per pesan:</b> annoyed = sinyal apa pun menyala; annoyed-at-assistant = pola negation + repetition + blame; angry = at-assistant dan (profanity atau yelling). Atribusi: ke model yang sedang diajak bicara user pada pesan itu (mengikuti pergantian model di tengah sesi); agregasi per <em>versi model</em> (varian provider dari revisi yang sama digabung), dengan jumlah pesan minimum sebelum sebuah laju ditampilkan. Atribusi memakai model aktual dari respons (Fase 1), bukan model yang diminta.</li>
+        <li><b>Sinyal perilaku dari log sesi</b> (tanpa NLP sama sekali): frekuensi rewind/undo dan revert edit, diff git yang dibuang setelah giliran agent, prompt nyaris identik yang dikirim ulang, pergantian model manual tepat setelah sebuah giliran, sesi yang ditinggal di tengah tugas, dan interupsi user setelah error tool berulang. Dicatat sebagai penguat konteks di samping skor teks, bukan penggantinya.</li>
+        <li><b>Rollup frustrasi</b> masuk pipeline SQLite Fase 12 sebagai tabel dan halaman <b>Frustration</b> sendiri di dashboard: per versi model, laju annoyed / at-assistant / angry + jumlah pesan dasarnya, supaya user bisa membandingkan model dengan data, bukan perasaan.</li>
+        <li><b>Judge LLM opsional (pola OMP persis):</b> role model <code>judge</code> di config mengklasifikasi teks prosa unik yang belum terklasifikasi (dibatasi panjang), <b>estimasi biaya ditampilkan dan disetujui sebelum jalan</b>, verdict di-cache berdasarkan hash prosa di tabel <code>frustration_verdicts</code> supaya run ulang gratis. Dengan verdict: annoyed = P(level 2) + P(level 3) &ge; 0.5; at-assistant menambah syarat target yang dinamai judge adalah assistant; angry = P(level 3) &ge; 0.5. Baris yang verdict-nya mencakup &lt;50% pesan ditandai &ldquo;mostly regex&rdquo;. Pengeluaran judge dicatat ke sesi berjalan, seperti OMP.</li>
+        <li><span class="rv ch">diubah</span><b>Lapis saran (bagian barunya):</b> saat laju frustrasi sebuah model melewati ambang yang bisa dikonfigurasi relatif terhadap baseline user sendiri (mis. kelipatan dari laju median semua modelnya, hanya bila jumlah pesan minimum terpenuhi), agent menampilkan saran eksplisit di sesi dan di dashboard: model apa yang bermasalah, datanya apa, dan tawaran konkret &mdash; pindah model sekarang, atau turunkan posisi model itu di combo aktif (Fase 6). <b>Saran tidak pernah mengeksekusi sendiri:</b> pergantian hanya terjadi atas persetujuan user, dan setiap saran + keputusan user dicatat di transkrip. Karena tugas sulit cenderung diberikan ke model kuat, laju frustrasi mentah bias terhadap model kuat; saran hanya muncul bila selisihnya signifikan (uji proporsi sederhana dengan jumlah minimum) dan UI menyebut bias ini apa adanya.</li>
+      </ol>
+      <div class="done-when">
+        <span class="lbl">Kriteria selesai</span>
+        <p>Fixture korpus pesan berlabel (termasuk prompt panjang &ge;3 baris yang marah-marah secara sopan dan pesan berisi kode penuh umpatan di dalam string) diklasifikasi sesuai label oleh jalur regex; fixture sesi dengan pergantian model di tengah membuktikan atribusi mengikuti model yang sedang diajak bicara; halaman Frustration menunjukkan laju per versi model dari fixture yang sama; fixture ambang membuktikan saran ganti model muncul dengan datanya dan <em>tidak</em> ada pergantian model yang terjadi tanpa persetujuan; run judge kedua atas korpus yang sama berbiaya nol karena cache hash. Fixture korpus Indonesia berlabel diklasifikasi sesuai label.</p>
+      </div>
+    </article>
+
+    <!-- FASE 14 -->
+    <article class="phase" id="fase-14" data-rel="v06">
+      <div class="phase-head">
+        <div class="phase-num">FASE 14</div>
+        <div class="tt">
+          <h3>Discord Rich Presence</h3>
+          <p class="goal">Status agent tampil lengkap di profil Discord user lewat IPC lokal: yang sedang dikerjakan, modelnya, tokennya, sudah berapa lama &mdash; dengan privasi per field dan tanpa satu pun kredensial Discord.</p>
+        </div>
+        <div class="tags"><span class="tag rel">v0.6</span></div>
+      </div>
+      <h4>Tugas kecil</h4>
+      <ol class="tasks">
+        <li><span class="rv ch">diubah</span><b>Spike wajib setengah hari sebelum kode final:</b> program Bun minimal yang di-compile (<code>bun build --compile</code>) menyambung ke <code>\\.\pipe\discord-ipc-0</code> <em>dan</em> <code>\\?\pipe\discord-ipc-0</code> (transport memakai bentuk yang lolos) di Windows asli dengan Discord jalan, handshake, dan menyetel satu activity. Hasilnya menentukan transport final: <code>node:net</code> bila lolos, API native <code>Bun.connect({unix})</code> bila tidak, atau sidecar skrip kecil yang di-spawn binary utama sebagai jalan terakhir. Catat hasilnya di repo; jangan menulis modul penuh sebelum spike ini hijau.</li>
+        <li><b>Transport IPC hand-rolled</b> (<code>src/presence/ipc.ts</code>, nol dependensi runtime, di belakang interface <code>Transport</code> supaya implementasi berbasis library bisa ditukar masuk): penemuan path indeks 0&ndash;9 (Windows <code>\\?\pipe\discord-ipc-{n}</code>; Linux/macOS prefix <code>$XDG_RUNTIME_DIR</code> &rarr; <code>$TMPDIR</code> &rarr; <code>$TMP</code> &rarr; <code>$TEMP</code> &rarr; <code>/tmp</code>, plus probing subdirektori Flatpak <code>app/com.discordapp.Discord/</code> dan Snap <code>snap.discord/</code>), framing header 8 byte little-endian + JSON, handshake opcode 0 dengan Application ID saja, perintah <code>SET_ACTIVITY</code> opcode 1, decoder frame yang tahan frame tergabung/terpotong dan membatasi ukuran frame. WSL2 terdeteksi dan gagal diam-diam dengan satu baris log debug (pipe Windows tidak terjangkau tanpa relay).</li>
+        <li><b>State dan formatter</b> (<code>state.ts</code>, <code>format.ts</code>): <code>AgentPresenceState</code> (status, kata kerja tool, basename file, model, token, estimasi biaya, proyek, branch, worker berjalan/maks, waktu mulai sesi) diterjemahkan ke activity oleh satu fungsi murni: <code>details</code> = status + aksi sekarang, <code>state</code> = proyek &middot; model &middot; token (&middot; biaya bila diizinkan), tooltip gambar besar = model lengkap + nama combo, <code>timestamps.start</code> tetap sepanjang sesi. Formatter adalah <b>satu-satunya titik penyaring privasi</b> dan menegakkan batas 2&ndash;128 karakter (potong dengan &hellip;, tidak pernah memancarkan string 1 karakter). State harus bisa diserialisasi ke JSON apa adanya, supaya ekstraksi daemon nanti mekanis.</li>
+        <li><b>Pemetaan tool ke kata kerja manusia</b> untuk tool inti Fase 2 (pola claude-presence): edit/write &rarr; <code>Editing &lt;basename&gt;</code>, read &rarr; <code>Reading &hellip;</code>, bash &rarr; <code>Running terminal command</code> (perintahnya sendiri tidak pernah ditampilkan), grep &rarr; <code>Searching codebase</code>, glob &rarr; <code>Finding files</code>, web &rarr; <code>Searching the web</code>, subagent &rarr; <code>Running subagent</code>, tool lain &rarr; <code>Using &lt;nama tool&gt;</code>.</li>
+        <li><b>Mesin status:</b> <code>working</code>, <code>waiting-for-approval</code> (dari event <code>approval.requested</code> Fase 3; ikon kecil khusus karena ini state yang paling perlu dilihat user), <code>planning/thinking</code>, <code>waiting-for-input</code> (turn selesai atau 120 detik tanpa event), dan <code>orchestrating</code> di mode coordinator Fase 11. Tiap status punya aset ikon kecil sendiri (<code>status-working</code>, <code>status-waiting</code>, <code>status-thinking</code>, <code>status-idle</code>) di aplikasi Discord bawaan; gambar besar = logo agent. Perilaku idle dapat dipilih: tampilkan kartu Waiting atau hapus kartu setelah timeout.</li>
+        <li><b>Coalescer update:</b> dedupe payload yang sama persis, interval minimum <b>15 detik</b> ditegakkan sebagai lantai (nilai config lebih kecil diabaikan), flush trailing-edge supaya state terbaru yang terkirim, tidak pernah mengirim saat tidak ada perubahan. Perubahan token/biaya ikut menumpang flush bermakna berikutnya, bukan memicu flush sendiri; perubahan ke <code>waiting-for-approval</code> ter-flush pada instans legal paling awal. <code>timestamps.start</code> konstan di semua flush.</li>
+        <li><b>Siklus hidup fail-silent:</b> koneksi malas hanya saat <code>session.started</code> (CLI sekali jalan seperti <code>--help</code> tidak menyentuh IPC dan tidak menunda exit); seluruh batas modul dibungkus catch-all &mdash; Discord tidak ada, pipe hilang, handshake ditolak, Activity Privacy mati di sisi user, semuanya keadaan normal tanpa output konsol dan tanpa lemparan error ke loop. Reconnect dengan backoff 1 &rarr; 2 &rarr; 5 &rarr; 10 &rarr; 30 detik (pindai ulang indeks 0&ndash;9 tiap percobaan, backoff reset saat sukses, state terakhir dikirim ulang begitu <code>READY</code>). Saat exit graceful: kirim <code>SET_ACTIVITY</code> kosong lalu tutup pipe; saat crash, penutupan pipe membersihkan kartu dengan sendirinya. Timer dan socket tidak boleh menahan proses tetap hidup (async, unref).</li>
+        <li><b>Config dan kontrol runtime:</b> blok <code>presence</code> di config global dengan override per proyek (dicocokkan dari root repo/remote): <code>enabled</code> (juga env <code>AGENT_PRESENCE=0</code> dan flag <code>--no-presence</code>), <code>clientId</code> (null = aplikasi bawaan; mengganti ke app sendiri mengubah nama/art kartu jadi milik user dan key aset upload harus ada di app mereka atau gambar diam-diam fallback), <code>showProject</code>, <code>showBranch</code> (default mati), <code>showFileName</code> (basename saja), <code>showModel</code>, <code>showTokens</code>, <code>showCost</code> (default mati; biaya yang tampil ditandai <code>~</code> bila estimasi), <code>showRepoButton</code>, <code>partyMode</code> (default mati), <code>idleTimeoutSec</code> 120, dan daftar proyek yang dinonaktifkan total. Perintah runtime <code>/presence pause</code>, <code>/presence resume</code>, dan <b>Incognito satu tombol</b> (proyek &rarr; <code>Private Project</code>, branch + nama file + tombol repo hilang, agent dan model tetap tampil; pause dan Incognito persisten seperti di pluginmu). Pola file sensitif (<code>.env</code>, <code>*secret*</code>, dst) menyembunyikan nama file otomatis.</li>
+        <li><b>Tombol repo:</b> <code>buttons[0]</code> &ldquo;View Repository&rdquo; hanya bila remote <code>origin</code> adalah URL https publik yang valid; tidak pernah untuk remote SSH-only/pribadi tanpa opt-in, dan selalu hilang di Incognito. Slot tombol kedua dibiarkan kosong. Dokumentasikan di README bahwa tombol tidak terlihat oleh pemilik kartu (perilaku Discord) dan presence hanya butuh Application ID publik &mdash; tidak ada client secret atau token apa pun di config.</li>
+        <li><b>Agregasi coordinator dan arbitrase:</b> di mode Fase 11, token/biaya = agregat semua worker, status = worker berprioritas tertinggi (<code>waiting-for-approval &gt; error &gt; working &gt; planning &gt; idle</code>), dan jumlah worker tampil sebagai sufiks <code>+N</code> di <code>details</code>; party mode opt-in merender <code>party.size = [berjalan, maks]</code> dengan <code>privacy: PRIVATE</code> dan id acak per sesi, tanpa secret. Antar proses agent independen: last-active-wins untuk v1, ditegakkan satu instance provider presence per mesin sebisa mungkin agar kartu tidak flip-flop.</li>
+        <li><b>Diagnostik:</b> perintah <code>/presence status</code> melaporkan terhubung atau tidak, indeks pipe yang dipakai, error terakhir, dan kartu terformat yang akan tampil &mdash; karena setiap tool peer akhirnya membutuhkan ini untuk kebutuhan support. Aset aplikasi bawaan disiapkan: logo 1024&times;1024 dan empat ikon status, key lowercase sesuai aturan portal.</li>
+      </ol>
+      <div class="done-when">
+        <span class="lbl">Kriteria selesai</span>
+        <p>Di Windows asli dengan Discord jalan: kartu tampil dengan nama app agent, <code>details</code>/<code>state</code> mengikuti status sesi secara langsung (working, waiting approval, waiting input), timer elapsed tidak ke-reset antar update, dan tidak lebih dari satu update terkirim per 15 detik pada fixture event yang rapat (dilihat dari log debug). Discord ditutup di tengah sesi &rarr; agent tetap jalan tanpa error yang terlihat, dan presence pulih sendiri saat Discord dibuka lagi. Incognito terbukti menyembunyikan proyek/branch/file/tombol repo pada kartu terformat; fixture remote SSH-only membuktikan tombol repo tidak dibuat; fixture perintah bash berisi string mirip token membuktikan hanya kata kerja generik yang tampil. Spike binary Bun Windows (tugas 1) terdokumentasi hasilnya di repo.</p>
+      </div>
+    </article>
+
+    <!-- FASE 15 -->
+    <article class="phase" id="fase-15" data-rel="v07">
+      <div class="phase-head">
+        <div class="phase-num">FASE 15</div>
+        <div class="tt">
+          <h3>Appearance: tema, status line dua lapis, dan budget performa</h3>
+          <p class="goal">Agent terasa selesai dan tetap ringan: tema ala Pi yang dipangkas (bukan 66 token OMP), status line segmen ala OMP plus hook perintah eksternal ala Claude Code (yang tidak dimiliki OMP, Pi, maupun OpenCode), dan target performa final di atas gerbang regresi yang sudah aktif sejak Fase 0 &mdash; dibangun di atas TUI Fase 9 (renderer ADR-003), yang layout dasarnya tetap (transkrip, composer, status line).</p>
+        </div>
+        <div class="tags"><span class="tag rel">v0.7</span></div>
+      </div>
+      <h4>Tugas kecil</h4>
+      <ol class="tasks">
+        <li><b>Skema tema satu file JSON per tema</b> (format Pi): <code>{ "name", "vars": {...}, "colors": {...}, "export": {...} }</code> dengan <code>export</code> opsional untuk ekspor HTML Fase 5; nilai warna <code>#RRGGBB</code> | indeks <code>0&ndash;255</code> | nama var (boleh bersarang; referensi hilang/melingkar = error yang dilaporkan) | <code>""</code> (default terminal); hex dipancarkan sebagai truecolor di terminal yang mampu, dikonversi ke 256 warna terdekat bila tidak. Validasi memakai skema JSON yang dikirim di repo, tapi <b>token yang hilang diisi dari tema dasar dan kunci tak dikenal hanya diperingatkan</b> &mdash; satu kunci asing tidak pernah menenggelamkan seluruh file seperti perilaku <code>additionalProperties: false</code> OMP.</li>
+        <li><b>Set token v1: &plusmn;38</b> (dipotong dari 66-nya OMP dan 51-nya Pi). Core 11 Pi dipertahankan (<code>accent</code>, <code>border</code>, <code>borderAccent</code>, <code>borderMuted</code>, <code>success</code>, <code>error</code>, <code>warning</code>, <code>muted</code>, <code>dim</code>, <code>text</code>, <code>thinkingText</code>); latar &amp; teks pesan/tool memakai grup Pi (<code>selectedBg</code>, <code>userMessageBg</code>/<code>userMessageText</code>, <code>customMessageBg</code>/<code>customMessageText</code>/<code>customMessageLabel</code>, <code>toolPendingBg</code>/<code>toolSuccessBg</code>/<code>toolErrorBg</code>, <code>toolTitle</code>, <code>toolOutput</code>); markdown dipangkas ke 6 (<code>mdHeading</code>, <code>mdLink</code>, <code>mdCode</code>, <code>mdCodeBlockBorder</code>, <code>mdQuoteBorder</code>, <code>mdListBullet</code>; <code>mdLinkUrl</code>/<code>mdCodeBlock</code>/<code>mdQuote</code>/<code>mdHr</code> default ke <code>muted</code>/<code>text</code>/<code>border</code> di kode); diff 3 utuh; syntax 9 utuh (highlighting terlihat rusak dengan lebih sedikit); <b>status line 5 terkonsolidasi</b> (<code>statusLineBg</code>, <code>statusLineModel</code>, <code>statusLinePath</code>, <code>statusLineGitClean</code>, <code>statusLineGitDirty</code>) dengan konteks/biaya/subagent memakai ulang token inti, bukan 13 token terpisah ala OMP; mode 2 (<code>bashMode</code> + satu <code>thinkingAccent</code>; level thinking tetap terkode di border editor seperti Pi/OMP, dipetakan dari satu token itu, bukan 7 warna per level).</li>
+        <li><b>Tema bawaan yang dikirim: 5 + <code>system</code></b> &mdash; <code>dark</code> (palet rumah), <code>light</code>, pasangan Catppuccin (Mocha untuk slot gelap, Latte untuk slot terang), Tokyo Night, dan Gruvbox atau Nord; tema <code>system</code> kebanyakan berisi <code>""</code> (mengikuti warna terminal) dan adalah tema paling tangguh di terminal aneh. Bukan 98&ndash;100 tema ala OMP: itu konsekuensi fork matang berkontributor, dan file user menutup sisanya.</li>
+        <li><b>Slot terang/gelap model OMP:</b> config <code>theme: { dark: &lt;nama&gt;, light: &lt;nama&gt; }</code>; deteksi latar terminal lewat kueri <b>OSC 11</b> dengan fallback <code>COLORFGBG</code>, default ke slot gelap bila tidak ada sinyal, dan <b>dievaluasi ulang saat penampilan terminal/OS berubah selagi TUI jalan</b> sehingga slot bertukar langsung. Setting global <code>symbolPreset: unicode | nerd | ascii</code> (dicuri dari OMP) berlaku lintas tema, bukan per tema, di v1.</li>
+        <li><b>Lokasi dan penemuan tema:</b> bawaan tertanam di binary; file user di <code>~/.&lt;agent&gt;/agent/themes/*.json</code>; <b>tema proyek di <code>.&lt;agent&gt;/themes/*.json</code> didukung untuk proyek tepercaya saja</b> (meniru Pi; OMP yang mengabaikan tema proyek adalah yang menyimpang). Nama file tanpa <code>.json</code> = nama pilihan = field <code>name</code> di JSON; tabrakan nama dengan bawaan diselesaikan eksplisit (bawaan menang, seperti OMP, dan didokumentasikan).</li>
+        <li><b>Perintah <code>/theme</code> dengan pratinjau langsung</b> (UX /settings OMP, apapun nama perintahnya): menggerakkan pilihan me-render ulang TUI dengan tema kandidat, Enter mempertahankan dan menyimpan ke config, Esc memulihkan tema sebelumnya. File kustom yang sedang aktif <b>di-hot-reload</b>: simpan JSON valid me-repaint TUI setelah debounce &plusmn;100 ms tanpa perintah reload; simpan yang rusak mempertahankan versi baik terakhir di layar dan melaporkan error-nya, tidak pernah layar kosong.</li>
+        <li><b>Status line lapis 1 &mdash; segmen bawaan:</b> satu baris powerline, kiri/kanan terpisah, layout default: kiri <code>model</code> (nama tampil + level thinking, warna <code>statusLineModel</code>), <code>mode</code> (Plan/Fast/mode persetujuan, hanya tampil saat bukan default), <code>path</code> (cwd dipendekkan <code>~</code>, relatif-repo di dalam repo git), <code>git</code> (branch + <code>+staged ~unstaged ?untracked</code>, warna clean/dirty); kanan <code>context_pct</code> (<code>54%/200k</code> + bar kecil; kuning &ge;70%, merah &ge;90%; penanda compaction setelah compact), <code>tokens</code> (<code>&uarr;in &darr;out</code>, opsi <code>R</code> cache-read dan <code>CH</code> hit%), <code>cost</code> (estimasi harga daftar sesi, dilabeli estimasi), <code>budget</code>, <code>session</code> (nama/id pendek), <code>status</code> (<code>&#9679; working / &#9675; waiting / &#10003; ready / &#10007; error</code> + slot status modul internal + hitungan subagent). Config meniru idiom OMP: <code>statusLine.preset</code> (<code>default | minimal | compact | full | custom</code>; <code>minimal</code> = model+path+git+context_pct, <code>compact</code> = default tanpa tokens/session, <code>full</code> = semuanya termasuk cache + tok/s + jam), <code>separator</code> (<code>powerline-thin</code> default | <code>powerline | slash | pipe | block | none | ascii</code>), <code>transparent</code>, dan <code>leftSegments</code>/<code>rightSegments</code>/<code>segmentOptions</code> yang hanya dibaca saat <code>preset: custom</code>. <b>Aturan terminal sempit (meniru OMP):</b> segmen dibuang dalam urutan prioritas tetap (jam &rarr; tokens &rarr; session &rarr; path dipotong dari kiri &rarr; mode), tidak pernah membungkus baris atau overflow &mdash; baris yang overflow merusak renderer diferensial.</li>
+        <li><span class="rv ch">diubah</span><b>Segmen <code>budget</code> &mdash; segmen khas agent ini:</b> sisa budget dari Fase 6 (<code>$4.92 left</code>, <code>1.2M tok left</code>, atau % cap tersisa &mdash; unitnya mengikuti budget Fase 6, jadi model langganan tanpa harga tetap punya segmen yang bermakna; berubah merah di bawah 10%). Tidak ada agent yang disurvei yang mengirimkannya sebagai segmen kelas satu (Pi/OMP menampilkan belanja, bukan sisa; spend limit Claude Code ada di payload tapi di balik gateway) &mdash; ini pembeda kecil yang terlihat setiap saat. Segmen <code>git</code> <b>di-cache</b>: refresh di batas turn dan setelah tool pengubah file, TTL 1&ndash;5 detik; tidak pernah spawn <code>git</code> per render (persis biaya yang diperingatkan dokumen Claude Code).</li>
+        <li><b>Status line lapis 2 &mdash; hook perintah eksternal (kontrak Claude Code, diperbaiki):</b> config <code>statusLine: { type: "command", command: "~/.&lt;agent&gt;/statusline.sh", refreshInterval: 5, timeoutMs: 2000, padding: 0 }</code>; bila disetel, output-nya <b>menggantikan baris lapis 1</b> (model mental lebih sederhana daripada baris ekstra di atas badge ala Claude Code). <b>stdin JSON menyalin nama field Claude Code</b> di mana tumpang tindih (<code>model.id</code>/<code>display_name</code>, <code>effort</code>/<code>thinking</code>, <code>cwd</code>/<code>workspace</code>, <code>cost.*</code>, <code>context_window.*</code>, <code>rate_limits.*</code>, <code>session_id</code>/<code>session_name</code>/<code>transcript_path</code>, <code>version</code>) <b>plus dua perbaikan atas gap-nya</b>: blok <code>git</code> berisi <code>branch</code> + hitungan staged/unstaged/untracked (skrip tidak perlu shell-out ke git) dan blok <code>budget</code> (<code>session_remaining_tokens</code>, <code>session_remaining_turns</code>, <code>session_cap_usd</code>, <code>session_remaining_usd</code>, <code>daily_remaining_usd</code>), ditambah <code>agent_status</code>. <b>Semantik refresh persis Claude Code:</b> jalan saat mulai, pesan assistant baru, compaction selesai, mode/model berubah, dan tiap <code>refreshInterval</code> (detik, min 1); <b>debounce 300 ms; run yang sedang jalan dibatalkan/dibunuh saat trigger baru tiba; <code>timeoutMs</code> ditegakkan</b> (skrip menggantung tidak pernah membekukan footer); env <code>COLUMNS</code>/<code>LINES</code> disetel karena stdout ditangkap; stdout ANSI + multi-baris dihormati, dibatasi maks 3 baris; error/exit non-nol jatuh kembali ke lapis 1, bukan baris kosong.</li>
+        <li><span class="rv ch">diubah</span><b>API UI internal</b> (pola Pi/OMP) untuk modul milik sendiri &mdash; presence, budget, orchestration: <code>setStatus(key, text | undefined)</code> menulis slot bernama yang dirender segmen <code>status</code>, dan <code>setWidget(key, lines, "aboveEditor" | "belowEditor")</code>. Ini bukan API ekstensi pihak ketiga: sistem ekstensi belum ada di plan dan masuk backlog, dan <code>setFooter</code> ditunda bersamanya.</li>
+        <li><span class="rv ch">diubah</span><b>Rendering yang menjaga latensi:</b> renderer diferensial (<code>render(width): string[]</code>, diff baris, CSI 2026) sudah berdiri sejak Fase 9 sesuai ADR-003, jadi fase ini tidak mengganti renderer. Yang ditambahkan: ganti tema, hot reload, dan refresh status line tidak pernah memicu redraw penuh; <code>requestRender()</code> dikoales per tick; siklus blok transkrip aktif &rarr; settled &rarr; <b>committed</b> (ditulis ke scrollback terminal, cache dibebaskan) diaudit di bawah sesi panjang; delta token streaming tetap &le;30 paint/detik.</li>
+        <li><span class="rv ch">diubah</span><b>Target performa final:</b> gerbang regresi sudah aktif sejak Fase 0 (ADR-006) dan latensi TUI sejak Fase 9; fase ini menetapkan target absolut dan menutup sisanya. Flag <code>--startup-trace</code> mencatat mark <code>performance.now()</code> (config dimuat / tema dimuat / render pertama / siap) dan waktu sampai byte pertama ke provider untuk headless. Target: <b>cold start &lt;300 ms p50</b> (stretch &lt;150 ms), <b>overhead headless &lt;500 ms</b> di luar TTFT, <b>idle RSS &lt;100 MB</b> (stretch &lt;70 MB), pertumbuhan RSS &lt;20 MB per 1.000 pesan (state sesi berjendela; file sesi &gt;8 MiB di-stream), perintah status line eksternal &le;200 ms tipikal, dan <b>ukuran binary di bawah target yang ditetapkan dari baseline Fase 0</b>, dengan anggaran per dependensi dicatat tiap rilis. Disiplin penjaganya: antrean terbatas, sink output tool head+tail, periferal malas (MCP di-race 250 ms dan ditunda, provider di-lazy-import, preconnect saat penyiapan sesi). Diukur di Windows dan Linux.</li>
+      </ol>
+      <div class="done-when">
+        <span class="lbl">Kriteria selesai</span>
+        <p>Fixture tema kustom dengan satu token hilang dan satu kunci asing tetap termuat (token diisi dari tema dasar, kunci asing diperingatkan, TUI tidak jatuh ke fallback); <code>/theme</code> membuktikan pratinjau langsung + Esc memulihkan, dan menyimpan file tema aktif membuktikan hot reload tanpa restart; pergantian penampilan terminal membuktikan slot dark/light bertukar selagi TUI jalan; tema proyek hanya termuat di proyek tepercaya. Status line: preset <code>custom</code> membuktikan urutan <code>leftSegments</code>/<code>rightSegments</code> yang dikonfigurasi ter-render persis, terminal sempit membuktikan segmen dibuang mengikuti urutan prioritas tanpa overflow, dan segmen <code>budget</code> berubah mengikuti pemakaian Fase 6. Hook eksternal: skrip fixture menerima JSON berisi <code>git.branch</code> dan blok <code>budget</code>, skrip yang tidur 5 detik terbukti dibunuh di <code>timeoutMs</code> dengan footer jatuh ke lapis 1, dan trigger rapat terbukti ter-debounce 300 ms dengan run lama terbatalkan. Budget: <code>--startup-trace</code> pada mesin uji mencatat cold start &lt;300 ms dan idle RSS &lt;100 MB, ukuran binary di bawah target dari baseline Fase 0, dan gerbang regresi CI tetap hijau; semua uji jalan di Windows dan Linux.</p>
+      </div>
+    </article>
+  </section>
+
+  <!-- ============ HASIL AKHIR ============ -->
+  <section class="block" id="hasil-akhir">
+    <h2><span class="no">E</span> Hasil akhir: vonis dan daftar pembeda final</h2>
+    <p class="sub">Enam riset (anatomi agent + 9Router, Antigravity, orchestration, riset penutup soal <code>/stats</code>/frustrasi/combo, riset Discord RPC, dan riset appearance/status line/profil ringan Oh My Pi dan Pi) menyatu jadi satu cetak biru: agent ini realistis dibangun satu orang karena semua polanya sudah terbedah, dan pembedanya menutup celah yang belum terisi secara terintegrasi di pasaran. Klaim &ldquo;tidak ada&rdquo; dicek ulang sebelum dipakai di README.</p>
+    <div class="card">
+      <h3>Daftar pendek pembeda final (yang dibangun, berurutan)</h3>
+      <ol class="tight">
+        <li><span class="rv ch">diubah</span><b>Hard budget + combo fallback bernama di dalam sesi</b> (Fase 6) &mdash; rantai fallback di file config sudah ada di OMP (<code>retry.fallbackChains</code>) dan LiteLLM, dan Claude Code headless punya batas giliran dan biaya per run. Yang dibangun di sini adalah gabungannya di satu agent: combo sebagai model virtual yang sah di mana pun model sah, normalisasi transkrip saat pindah model, dan budget berbasis token/giliran yang juga berlaku untuk model langganan.</li>
+        <li><span class="rv ch">diubah</span><b>Verification gate bawaan, dijalankan runner, tahan bypass</b> (Fase 7) &mdash; Stop hook Claude Code bisa dipakai merakit gate serupa secara DIY; di sini gate adalah bagian inti, dijalankan runner (bukan model), dan file terlindungi dicek lewat hash sehingga tidak bisa diakali lewat bash.</li>
+        <li><span class="rv ch">diubah</span><b>Sesi JSONL portabel dengan skema publik dan redaksi secret</b> (Fase 5) &mdash; agent lain juga menyimpan sesi lokal, jadi ini kualitas dasar, bukan pembeda besar; nilainya ada di skema terdokumentasi, export/import/replay, dan tanpa server vendor.</li>
+        <li><b>Saran ganti model berbasis frustrasi per model</b> (Fase 13) &mdash; OMP mengukur frustrasi tapi tidak menindaklanjutinya; tidak ditemukan agent yang menindaklanjutinya. Dengan leksikon Indonesia sejak v1, inilah pembeda yang paling belum diklaim.</li>
+        <li><b>Panel RAM proses + mesin di dashboard <code>/stats</code></b> (Fase 12) &mdash; statistik resource proses tidak ada di omp-stats maupun agent lain yang disurvei; sisanya dari dashboard itu meniru pola OMP yang terbukti.</li>
+        <li><b>Discord Rich Presence lengkap khas agent</b> (Fase 14) &mdash; bukan pembeda celah pasar, tapi fitur yang polanya sudah terbukti (termasuk dari <code>orca-discord-rpc</code> milikmu): status termasuk waiting-for-approval, model, token, dan timer sesi, hand-rolled tanpa dependensi, dengan privasi per field sejak awal.</li>
+        <li><span class="rv ch">diubah</span><b>Appearance kelas satu + status line dua lapis + ringan yang terukur</b> (Fase 15) &mdash; tema ala Pi yang dipangkas (&plusmn;38 token, 5 bawaan + file user/proyek, hot reload, slot dark/light), status line segmen ala OMP plus hook perintah eksternal ala Claude Code dengan payload yang diperbaiki (<code>git.branch</code> dan budget ikut), segmen sisa budget, dan gerbang performa yang aktif sejak Fase 0.</li>
+      </ol>
+      <p class="note">Yang sengaja <em>bukan</em> pembeda: login Antigravity native (dilarang tertulis oleh Google, sudah ada gelombang ban &mdash; masuk lewat 9Router), merge otomatis di orchestration (tidak ada pemain pasar yang membuktikan aman; integrasi tetap terpicu manusia di Fase 11), strategi combo Smart Router/Fusion (ada di 9Router, tapi biayanya judge per request; ditunda di backlog), dan memory lintas proyek (masih di backlog F, belum di 16 fase).</p>
+    </div>
+  </section>
+
+  <!-- ============ BACKLOG ============ -->
+  <section class="block" id="backlog">
+    <h2><span class="no">F</span> Ditunda: backlog eksplisit, bukan lupa</h2>
+    <p class="sub">Item di sini sengaja tidak masuk 16 fase di atas. Dicatat supaya tidak ada yang menganggapnya hilang, dan tidak ada yang menyelundupkannya ke tengah jalan.</p>
+    <div class="card">
+      <ul class="tight backlog">
+        <li><b>ACP client untuk binary resmi <code>antigravity-acp</code></b>: satu-satunya rute Antigravity native yang patuh ToS; model hanya Gemini. Rute yang didukung sekarang adalah 9Router (Fase 1) dan API key resmi.</li>
+        <li><b>Memory lintas proyek</b> yang bisa diinspeksi user dan disuntik ulang setelah compaction (celah pasar nomor 3; setelah Fase 4 dan 5 stabil).</li>
+        <li><span class="rv">baru</span><b>Klien LSP</b> (diagnostik semantik + navigasi): v1 memakai perintah diagnostik per proyek pasca-giliran (Fase 2); LSP menyusul bila eval menunjukkan manfaat yang sepadan dengan biaya startup dan RAM.</li>
+        <li><span class="rv">baru</span><b>Sistem ekstensi pihak ketiga</b> (API <code>ctx.ui</code> publik, <code>setFooter</code>, tool dan perintah dari paket): API UI internal Fase 15 adalah benihnya.</li>
+        <li><span class="rv">baru</span><b>Tool PowerShell native di Windows</b>: ADR-004 memakai Git Bash untuk v1.</li>
+        <li><span class="rv">baru</span><b>Kompatibilitas Node sebagai runtime kedua</b>: dicabut oleh ADR-001; dibuka lagi hanya bila distribusi via npm tanpa Bun benar-benar dibutuhkan.</li>
+        <li><b>Permukaan review terurut risiko</b> + batas perubahan per tugas (celah pasar nomor 10).</li>
+        <li><b>Workflow script dinamis</b> ala Claude Code dan agent teams peer-to-peer (setelah Fase 11 terbukti; titik manis paralel hanya 3 sampai 5 writer).</li>
+        <li><b>Merge queue otomatis</b> (hanya Gas Town yang punya; risiko tinggi).</li>
+        <li><b>OS-level sandbox sendiri</b> (pakai permission + mode dulu).</li>
+        <li><b>Strategi combo Smart Router dan Fusion ala 9Router</b> (judge memilih model di depan, atau semua model paralel + sintesis judge): biaya judge per request; strategi <code>fallback</code> dan <code>round-robin</code> Fase 6 harus terbukti dulu.</li>
+        <li><b>Demosi otomatis model di combo berdasar frustrasi</b>: Fase 13 berhenti di saran yang butuh persetujuan user. Mengubah urutan combo tanpa persetujuan adalah langkah terpisah yang hanya boleh dipertimbangkan setelah data saran terbukti akurat.</li>
+        <li><b>Statistik host mendalam</b>: penjumlahan pohon proses (RSS termasuk LSP/shell/subagent), disk I/O, suhu, GPU &mdash; butuh helper native atau pustaka <code>systeminformation</code> yang di Windows lambat (shell-out PowerShell). Panel Resource Fase 12 memakai builtin dulu dan menyatakan batasnya dengan jujur.</li>
+        <li><b>Kemewahan appearance v2 (di atas Fase 15)</b>: override simbol per tema + spinner frames kustom ala OMP, &plusmn;100 tema bawaan dan marketplace/paket tema, HUD subagent di footer, renderer ekstensi in-process penuh di luar <code>setStatus</code>/<code>setWidget</code>, serta LSP/DAP &mdash; semuanya ditunda karena biaya beratnya terukur di riset A4 (itulah yang membuat OMP sampai di &plusmn;183 MB); v1 appearance berhenti di &plusmn;38 token, 5 bawaan + <code>system</code>, dan dua lapis status line.</li>
+        <li><b>Discord RPC lanjutan (di atas Fase 14)</b>: dial level detail ala &ldquo;Cycle Detail Level&rdquo;-nya plugin jondmarien dan template string <code>details</code>/<code>state</code> yang bisa diedit user (variabel <code>{status} {tool} {model} {tokens} {cost} {project} {branch} {elapsed} {workers}</code>, pola VSCord); tampilkan biaya + persen konteks di tooltip di balik <code>showCost</code>; art per mode/model dan art animasi via URL eksternal; agregasi multi-proses (lockfile leader, lalu ekstraksi daemon ala opencode-rich-presence bila memang dibutuhkan); dukungan relay WSL2 ke Discord Windows; wizard client ID kustom dengan validasi key aset di app milik user.</li>
+      </ul>
+      <div class="rejected">
+        <span class="lbl">Ditolak permanen</span>
+        <p><b>Login Antigravity / OAuth consumer native untuk didistribusikan.</b> Melanggar ToS Google dan sudah ada gelombang ban Februari 2026. Agent ini tidak akan pernah mengimplementasikannya; kuota Antigravity masuk lewat 9Router, bukan lewat token yang diutak-atik sendiri.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HANDOFF ============ -->
+  <section class="block" id="handoff">
+    <h2><span class="no">G</span> Handoff ke Claude Code</h2>
+    <p class="sub"><span class="rv ch">diubah</span>Eksekusi memakai paket starter yang menyertai revisi ini: <code>CLAUDE.md</code> (aturan tetap), <code>docs/WORKFLOW.md</code> (git, issue, PR), template issue/PR, perintah garis miring di <code>.claude/commands/</code>, dan skrip sinkron issue. Spesifikasi hidup di repo; status kerja hidup di GitHub Issues. File MD per fase ditulis tepat sebelum fasenya dimulai, berdasarkan kode yang sudah ada &mdash; bukan 16 file berisi kode lengkap yang ditulis di muka lalu basi.</p>
+    <div class="steps-flow">
+      <div class="sf">
+        <div class="n">LANGKAH 1 &middot; PER FASE, TEPAT WAKTU</div>
+        <p><b><code>/fase-rencana NN</code></b>: Claude Code membaca bagian fase ini, ADR, dan kode yang ada, lalu menulis <code>docs/phases/fase-NN.md</code> (Goal, Architecture, Tech Stack, task berkode <code>FNN-TMM</code> dengan Files, langkah, perintah verifikasi + output yang diharapkan) dan membuka PR docs. Setelah kamu merge, <b><code>/sinkron-issue NN</code></b> membuat satu issue per task di milestone fase itu.</p>
+      </div>
+      <div class="sf">
+        <div class="n">LANGKAH 2 &middot; PER ISSUE</div>
+        <p><b><code>/kerjakan</code></b>: ambil issue terbuka berikutnya di milestone aktif, branch <code>fNN/tMM-slug</code> dari <code>main</code> terbaru, commit kecil, verifikasi lokal, lalu PR berisi <code>Closes #N</code>. CI Linux + Windows harus hijau. <b>Kamu yang review dan squash-merge</b>; Claude Code tidak pernah merge sendiri dan tidak lanjut ke issue berikutnya tanpa diminta.</p>
+      </div>
+      <div class="sf">
+        <div class="n">LANGKAH 3 &middot; GERBANG FASE DAN RILIS</div>
+        <p><b><code>/gerbang-fase NN</code></b>: semua issue milestone tertutup, kriteria selesai dijalankan dan dibuktikan, eval dijalankan bila fase menyentuh prompt/tool/loop, laporan masuk lewat PR docs. Kamu menutup milestone; di batas peta B (setelah Fase 3, 7, 10, 11, 13, 14, 15) kamu membuat tag <code>v0.N.0</code>.</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Aturan main buat sesi eksekusi</h3>
+      <ul class="tight">
+        <li><b>Satu issue = satu branch = satu PR = satu squash commit di <code>main</code>.</b> Tidak ada kerja langsung di <code>main</code>, tidak ada force push ke <code>main</code>, tidak ada merge commit.</li>
+        <li><code>main</code> dilindungi: wajib lewat PR, CI hijau di Linux dan Windows (termasuk job perf), riwayat linear.</li>
+        <li>Commit memakai Conventional Commits dengan scope fase (<code>feat(f06): &hellip;</code>) dan baris <code>Refs #N</code>; judul PR <code>feat(f06): ringkasan [F06-T03]</code>.</li>
+        <li>Sebelum mulai fase baru, buktikan kriteria selesai fase sebelumnya masih hijau.</li>
+        <li>Kalau spec di file MD salah atau tidak jalan: berhenti, komentar di issue dengan label <code>status:needs-decision</code>, dan perbaiki spec lewat PR docs. Jangan improvisasi desain di PR kode.</li>
+        <li>Prinsip C mengikat di semua fase, terutama: Windows diuji tiap PR, test yang ada tidak pernah dilemahkan agar lulus, headless stdout tetap bersih, dan dependensi runtime baru butuh persetujuan tertulis.</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Plan final coding agent &middot; Sintesis enam riset 7&ndash;8 Nov 2026: arsitektur agent + 9Router, Antigravity, orchestration, Oh My Pi <code>/stats</code> + frustrasi + combo fallback, Discord Rich Presence, dan appearance + status line + profil ringan Oh My Pi dan Pi &middot; Gaya plan: Superpowers writing-plans (bite-sized tasks, verifikasi per tugas, tanpa placeholder) &middot; Revisi 8 Nov 2026: enam ADR dikunci, kontradiksi diperbaiki, alur kerja GitHub Issues + PR.
+  </div>
+</footer>
+
+<script>
+  (function(){
+    var buttons = document.querySelectorAll('.phasenav button[data-filter]');
+    var phases = document.querySelectorAll('.phase');
+    buttons.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var f = btn.getAttribute('data-filter');
+        buttons.forEach(function(b){ b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'); });
+        phases.forEach(function(ph){
+          var show = true;
+          if (f === 'all') show = true;
+          else if (f === 'diff') show = ph.getAttribute('data-diff') === '1';
+          else show = ph.getAttribute('data-rel') === f;
+          ph.classList.toggle('hidden', !show);
+        });
+        document.getElementById('fase').scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    });
+  })();
+</script>
+</body>
+</html>

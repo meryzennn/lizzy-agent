@@ -1,0 +1,15 @@
+# Normalisasi teks ke LF di repo
+* text=auto eol=lf
+
+# Skrip Windows tetap CRLF
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Fixture CRLF untuk test edit tool: jangan disentuh git
+test/fixtures/**/crlf/** -text
+
+# Biner
+*.png binary
+*.ico binary
+*.wasm binary
