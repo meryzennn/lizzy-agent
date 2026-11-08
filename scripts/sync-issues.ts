@@ -137,16 +137,16 @@ export function issueBody(
 ): string {
   const deps = depRefs.length ? depRefs.join(", ") : "—";
   return [
-    `**Task:** \`${t.id}\` · **Fase:** F${phaseNum} · **Type:** ${t.type}`,
+    `**Task:** \`${t.id}\` · **Phase:** F${phaseNum} · **Type:** ${t.type}`,
     `**Spec:** [${t.heading}](${specUrl}#${githubSlug(t.heading)})`,
-    `**Bergantung pada:** ${deps}`,
+    `**Depends on:** ${deps}`,
     "",
-    "### Selesai bila",
+    "### Acceptance criteria",
     "",
     t.done,
     "",
     "---",
-    "Files, langkah, dan perintah verifikasi ada di spec. Perubahan spec dilakukan lewat PR docs, lalu `sync-issues --update`.",
+    "Files, implementation steps, and verification commands are documented in the spec. Change the spec through a documentation PR, then run `sync-issues --update`.",
     `<!-- sync-issues: ${t.id} -->`,
   ].join("\n");
 }

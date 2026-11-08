@@ -5,6 +5,8 @@ argument-hint: <nomor fase, mis. 06> [--update]
 
 Argumen: **$ARGUMENTS**
 
+All GitHub issue/PR titles, bodies, and authored discussions or comments must be English regardless of the chat language. Before live sync, verify that phase/task titles and acceptance prose on `main` are English and that the issue wrapper renders in English; if not, stop and request a source correction. Preserve parser headings, IDs, sync markers, and existing link anchors.
+
 1. `git switch main && git pull --ff-only`. Pastikan `docs/phases/fase-NN.md` sudah ada di `main`
    (artinya PR rencana sudah di-merge). Kalau belum: berhenti dan lapor.
 2. Jalankan dry-run dan tunjukkan hasilnya ke user:

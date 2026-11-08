@@ -1,25 +1,25 @@
-name: Task di luar file fase
-description: Task yang tidak berasal dari docs/phases (task fase dibuat oleh scripts/sync-issues.ts)
+name: Task outside the phase files
+description: Write in English; phase tasks from docs/phases are created by scripts/sync-issues.ts
 labels: ["type:feat"]
 body:
   - type: input
     id: fase
     attributes:
-      label: Fase
-      description: "Mis. F06. Isi juga milestone-nya."
+      label: Phase
+      description: "For example, F06. Also assign the milestone."
     validations:
       required: true
   - type: textarea
     id: alasan
     attributes:
-      label: Kenapa task ini perlu
+      label: Why this task is needed
     validations:
       required: true
   - type: textarea
     id: selesai
     attributes:
-      label: Selesai bila
-      description: Checklist yang bisa dibuktikan dengan perintah.
+      label: Acceptance criteria
+      description: A checklist that can be verified by running commands.
       value: |
         - [ ]
     validations:
@@ -27,5 +27,5 @@ body:
   - type: textarea
     id: spec
     attributes:
-      label: Dampak ke spec
-      description: Kalau task ini mengubah PLAN, ADR, atau fase MD, sebutkan. Spec diubah lewat PR docs terpisah.
+      label: Specification impact
+      description: State whether this task changes PLAN, an ADR, or phase Markdown. Change the spec through a separate documentation PR.

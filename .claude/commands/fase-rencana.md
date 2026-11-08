@@ -5,6 +5,8 @@ argument-hint: <nomor fase, mis. 06>
 
 Fase target: **$ARGUMENTS** (tulis sebagai dua digit, `NN`).
 
+Write every GitHub issue/PR title, body, and authored discussion or comment in English regardless of the chat language. Write phase/task titles and acceptance prose copied by `sync-issues` in English too; retain parser headings, IDs, sync markers, and existing link anchors.
+
 1. **Cek gerbang sebelumnya.** Untuk fase > 00: pastikan milestone fase sebelumnya sudah tertutup
    (`gh api "repos/{owner}/{repo}/milestones?state=all" --jq '.[] | [.title, .state] | @tsv'`)
    dan `docs/phases/fase-<NN-1>.md` punya "Laporan gerbang" yang lulus. Kalau belum: berhenti dan lapor.

@@ -1,11 +1,11 @@
 name: Bug
-description: Perilaku yang salah
+description: Report incorrect behavior in English
 labels: ["type:fix"]
 body:
   - type: textarea
     id: langkah
     attributes:
-      label: Langkah reproduksi
+      label: Steps to reproduce
       value: |
         1.
     validations:
@@ -13,7 +13,7 @@ body:
   - type: textarea
     id: harapan
     attributes:
-      label: Yang diharapkan vs yang terjadi
+      label: Expected and actual behavior
     validations:
       required: true
   - type: dropdown
@@ -27,9 +27,9 @@ body:
   - type: input
     id: versi
     attributes:
-      label: Versi / commit
+      label: Version / commit
   - type: textarea
     id: log
     attributes:
-      label: Log (stderr) — hapus secret dulu
+      label: Logs (stderr) — remove secrets first
       render: text

@@ -2,30 +2,29 @@ Closes #
 
 **Task:** `FNN-TMM` · **Spec:** `docs/phases/fase-NN.md`
 
-## Ringkasan
+## Summary
 
-<!-- 1–3 kalimat: apa yang berubah dan kenapa. -->
+<!-- Write the title and body in English. Use 1–3 sentences to explain what changed and why. -->
 
-## Cara verifikasi
+## Validation
 
 ```bash
-# perintah yang benar-benar dijalankan
+# commands actually run
 ```
 
-Ringkasan output:
+Observed results:
 
 ```
 ```
 
 ## Checklist
 
-- [ ] `bun run check` hijau lokal
-- [ ] CI Linux + Windows hijau
-- [ ] Tidak ada test yang dilemahkan, dihapus, atau di-skip
-- [ ] Tidak ada dependensi runtime baru (atau disetujui di #…)
-- [ ] Perf tidak regresi >20% (atau alasan + persetujuan update baseline)
-- [ ] stdout headless tetap bersih (bila menyentuh output)
-- [ ] Dokumen terdampak diperbarui (README, skema, ADR, fase MD)
+- [ ] `bun run check` passes locally
+- [ ] Linux and Windows CI pass
+- [ ] No existing tests were weakened, deleted, or skipped
+- [ ] No runtime dependencies were added (or approval is recorded in #…)
+- [ ] Performance has not regressed by >20% (or the reason and baseline update approval are recorded)
+- [ ] Headless stdout remains clean (if output behavior changed)
+- [ ] Affected documentation is updated (README, schemas, ADRs, phase Markdown)
 
-## Catatan, risiko, pertanyaan
-
+## Notes, risks, and open questions

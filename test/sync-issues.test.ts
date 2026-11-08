@@ -72,19 +72,61 @@ test("issue memuat link spec dan acceptance tanpa menyalin langkah", () => {
   expect(issueTitle(first)).toBe("[F00-T01] CLI ringan");
   const body = issueBody(first, "00", specUrl, []);
   expect(body).toContain(
-    "**Task:** `F00-T01` · **Fase:** F00 · **Type:** feat",
+    "**Task:** `F00-T01` · **Phase:** F00 · **Type:** feat",
   );
   expect(body).toContain(
     `**Spec:** [Task F00-T01 — CLI ringan](${specUrl}#task-f00-t01--cli-ringan)`,
   );
-  expect(body).toContain("**Bergantung pada:** —");
-  expect(body).toContain("### Selesai bila\n\n- [ ] Help bekerja.");
+  expect(body).toContain("**Depends on:** —");
+  expect(body).toContain("### Acceptance criteria\n\n- [ ] Help bekerja.");
   expect(body).toEndWith("<!-- sync-issues: F00-T01 -->");
   expect(body).not.toContain("Detail implementasi");
   expect(body).not.toContain("Catatan bukan acceptance");
   expect(
     issueBody(second, "00", specUrl, ["#1 (F00-T01)", "F01-T03"]),
-  ).toContain("**Bergantung pada:** #1 (F00-T01), F01-T03");
+  ).toContain("**Depends on:** #1 (F00-T01), F01-T03");
+});
+
+test("English phase content produces an English issue with stable references", () => {
+  const phase = parsePhase(
+    [
+      "# Fase 00 — Repository skeleton and validation harness",
+      "## Task F00-T01 — Bootstrap the package and validation harness",
+      "- **Type:** chore",
+      "### Selesai bila",
+      "- [ ] Linux and Windows checks pass.",
+      "## Task F00-T02 — Measure native startup baselines on three operating systems",
+      "- **Type:** spike",
+      "- **Bergantung pada:** F00-T01",
+      "### Selesai bila",
+      "- [ ] Startup time and child-process RSS are measured repeatedly.",
+    ].join("\r\n"),
+    "english-phase.md",
+  );
+  const task = phase.tasks[1];
+  expect(issueTitle(task)).toBe(
+    "[F00-T02] Measure native startup baselines on three operating systems",
+  );
+  expect(task.deps).toEqual(["F00-T01"]);
+  expect(
+    issueBody(task, phase.num, "https://example.invalid/spec.md", [
+      "#1 (F00-T01)",
+    ]),
+  ).toBe(
+    [
+      "**Task:** `F00-T02` · **Phase:** F00 · **Type:** spike",
+      "**Spec:** [Task F00-T02 — Measure native startup baselines on three operating systems](https://example.invalid/spec.md#task-f00-t02--measure-native-startup-baselines-on-three-operating-systems)",
+      "**Depends on:** #1 (F00-T01)",
+      "",
+      "### Acceptance criteria",
+      "",
+      "- [ ] Startup time and child-process RSS are measured repeatedly.",
+      "",
+      "---",
+      "Files, implementation steps, and verification commands are documented in the spec. Change the spec through a documentation PR, then run `sync-issues --update`.",
+      "<!-- sync-issues: F00-T02 -->",
+    ].join("\n"),
+  );
 });
 
 test.each([
