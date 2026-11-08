@@ -1,0 +1,69 @@
+name: baseline
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      LIZZY_PERF_RUNNER: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        if: runner.os != 'macOS'
+        with:
+          bun-version-file: .bun-version
+      - name: Install pinned macOS Bun from the official release API
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(cat .bun-version)" = "1.4.2"
+          test "$RUNNER_ARCH" = "ARM64"
+          gh release download bun-v1.4.2 --repo oven-sh/bun --pattern bun-darwin-aarch64.zip --dir "$RUNNER_TEMP/bun-official"
+          echo "90987a3a16d7db556d886ac3d551e7b6d3edf0a1cf43acaed622e8676be1d12f  $RUNNER_TEMP/bun-official/bun-darwin-aarch64.zip" | shasum -a 256 -c -
+          unzip -q "$RUNNER_TEMP/bun-official/bun-darwin-aarch64.zip" -d "$RUNNER_TEMP/bun-official"
+          test "$("$RUNNER_TEMP/bun-official/bun-darwin-aarch64/bun" --version)" = "$(cat .bun-version)"
+          echo "$RUNNER_TEMP/bun-official/bun-darwin-aarch64" >> "$GITHUB_PATH"
+      - run: bun install --frozen-lockfile
+      - name: Compile and measure hello
+        shell: bun {0}
+        run: |
+          import { mkdir } from "node:fs/promises";
+          import { cpus, release, totalmem } from "node:os";
+          import { resolve } from "node:path";
+          import { pathToFileURL } from "node:url";
+          const { measure } = await import(pathToFileURL(resolve(process.cwd(), "scripts/measure-perf.ts")).href);
+          const { run } = await import(pathToFileURL(resolve(process.cwd(), "src/platform/process.ts")).href);
+          await mkdir("dist", { recursive: true });
+          const binary = resolve("dist", process.platform === "win32" ? "hello.exe" : "hello");
+          const buildCommand = [process.execPath, "build", "--compile", "spikes/boot.ts", "--outfile", binary];
+          run(buildCommand, process.env, 120_000);
+          const measurement = measure([binary], binary, "hello-v1", process.env.LIZZY_PERF_RUNNER);
+          await Bun.write("dist/hello-measurement.json", JSON.stringify(measurement, null, 2));
+          await Bun.write("dist/environment.json", JSON.stringify({
+            key: measurement.key, runner: process.env.LIZZY_PERF_RUNNER, bun: Bun.version,
+            os: process.platform, arch: process.arch, osRelease: release(),
+            cpuModels: cpus().map(cpu => cpu.model.trim()).sort(), memoryBytes: totalmem(),
+            image: process.env.ImageOS, imageVersion: process.env.ImageVersion,
+            commit: process.env.GITHUB_SHA, buildCommand,
+            units: { versionMs: "milliseconds", idleRssBytes: "bytes", binaryBytes: "bytes" }
+          }, null, 2));
+      - uses: actions/upload-artifact@v4
+        with:
+          name: baseline-${{ matrix.os }}
+          if-no-files-found: error
+          path: |
+            dist/hello-measurement.json
+            dist/environment.json
