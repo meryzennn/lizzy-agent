@@ -75,6 +75,166 @@ function compareCli(reference: unknown, current: unknown) {
   return invoke(root, resolve("scripts/perf.ts"), [input]);
 }
 
+function assembleInputs(root: string) {
+  mkdirSync(join(root, "docs", "perf"), { recursive: true });
+  return [
+    "linux-x64-ci-ubuntu-latest-",
+    "win32-x64-ci-windows-latest-",
+    "darwin-arm64-ci-macos-latest-",
+    "win32-x64-local-",
+  ].flatMap((prefix, index) =>
+    ["hello-v1", "agent-f00-v1"].map((workload) => {
+      const file = join(root, `${index}-${workload}.json`);
+      writeFileSync(
+        file,
+        JSON.stringify({
+          ...measurement,
+          key: prefix + "a".repeat(64),
+          workload,
+          metrics: { ...measurement.metrics, binaryBytes: 101 },
+          samples: {
+            versionMs: Array(15).fill(100),
+            idleRssBytes: Array(5).fill(100),
+          },
+        }),
+      );
+      return file;
+    }),
+  );
+}
+
+test("assembler requires native hello/agent pairs for all three CI classes", () => {
+  const root = temporary();
+  const files = assembleInputs(root);
+  const result = invoke(
+    root,
+    resolve("scripts/assemble-baseline.ts"),
+    files.slice(0, 4),
+  );
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain("six native measurement files");
+  expect(() =>
+    readFileSync(join(root, "docs", "perf", "baseline.json")),
+  ).toThrow();
+});
+
+test("assembler preserves measurements and proposes caps from actual byte counts", () => {
+  const root = temporary();
+  const files = assembleInputs(root);
+  const result = invoke(root, resolve("scripts/assemble-baseline.ts"), files);
+  expect(result.stderr).toBe("");
+  expect(result.status).toBe(0);
+  const data = baselineSchema.parse(
+    JSON.parse(
+      readFileSync(join(root, "docs", "perf", "baseline.json"), "utf8"),
+    ),
+  );
+  expect(data.entries).toEqual(
+    files.map((file) => ({
+      ...JSON.parse(readFileSync(file, "utf8")),
+      binaryLimitBytes: 122,
+    })),
+  );
+});
+
+test.each([
+  {
+    name: "hardware pairing",
+    change: { key: `win32-x64-ci-windows-latest-${"b".repeat(64)}` },
+    diagnostic: "hello/agent pair",
+  },
+  { name: "Bun pairing", change: { bun: "1.4.3" }, diagnostic: "Bun 1.4.2" },
+  {
+    name: "workload",
+    change: { workload: "other-workload" },
+    diagnostic: "workload",
+  },
+  {
+    name: "runner/OS",
+    change: { key: `linux-x64-ci-windows-latest-${"a".repeat(64)}` },
+    diagnostic: "native runner",
+  },
+  {
+    name: "sample count",
+    change: { samples: measurement.samples },
+    diagnostic: "15 startup and 5 RSS",
+  },
+  {
+    name: "median",
+    change: { metrics: { ...measurement.metrics, versionMs: 101 } },
+    diagnostic: "median",
+  },
+  {
+    name: "invalid metric",
+    change: { metrics: { ...measurement.metrics, idleRssBytes: 0 } },
+    diagnostic: "too_small",
+  },
+])(
+  "assembler rejects $name before creating a baseline",
+  ({ change, diagnostic }) => {
+    const root = temporary();
+    const files = assembleInputs(root);
+    const input = JSON.parse(readFileSync(files[3], "utf8"));
+    writeFileSync(files[3], JSON.stringify({ ...input, ...change }));
+    const result = invoke(root, resolve("scripts/assemble-baseline.ts"), files);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(diagnostic);
+    expect(() =>
+      readFileSync(join(root, "docs", "perf", "baseline.json")),
+    ).toThrow();
+  },
+);
+
+test("assembler rejects duplicates and incomplete local pairs", () => {
+  const root = temporary();
+  const files = assembleInputs(root);
+  for (const [inputs, diagnostic] of [
+    [[...files, files[0]], "Duplicate"],
+    [files.slice(0, 7), "hello/agent pair"],
+    [[...files.slice(0, 4), ...files.slice(6)], "macos-latest"],
+  ] as const) {
+    const result = invoke(root, resolve("scripts/assemble-baseline.ts"), [
+      ...inputs,
+    ]);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(diagnostic);
+  }
+});
+
+test("assembler refuses to overwrite an existing reviewed baseline", () => {
+  const root = temporary();
+  const files = assembleInputs(root);
+  const path = join(root, "docs", "perf", "baseline.json");
+  writeFileSync(path, "approved content");
+  const result = invoke(root, resolve("scripts/assemble-baseline.ts"), files);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain("already exists");
+  expect(readFileSync(path, "utf8")).toBe("approved content");
+});
+
+test("assembler accepts additional complete hardware pairs without merging identities", () => {
+  const root = temporary();
+  const files = assembleInputs(root);
+  const extra = files.slice(0, 2).map((file, index) => {
+    const value = JSON.parse(readFileSync(file, "utf8"));
+    value.key = value.key.replace("a".repeat(64), "b".repeat(64));
+    const path = join(root, `extra-${index}.json`);
+    writeFileSync(path, JSON.stringify(value));
+    return path;
+  });
+  const result = invoke(root, resolve("scripts/assemble-baseline.ts"), [
+    ...files,
+    ...extra,
+  ]);
+  expect(result.stderr).toBe("");
+  expect(result.status).toBe(0);
+  expect(
+    JSON.parse(
+      readFileSync(join(root, "docs", "perf", "baseline.json"), "utf8"),
+    ).entries,
+  ).toHaveLength(10);
+});
+
 test.each(metrics)(
   "%s accepts exactly 20%% and fails above it through the CLI",
   (metric) => {

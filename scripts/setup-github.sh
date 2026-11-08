@@ -70,28 +70,58 @@ gh repo edit "$REPO" \
   --delete-branch-on-merge >/dev/null
 
 # ---------- proteksi main ----------
-# Status check wajib = nama job di .github/workflows/ci.yml.
-# Setelah Fase 0 menambah job perf, tambahkan namanya di CHECKS lalu jalankan ulang skrip ini.
-CHECKS='["check (ubuntu-latest)", "check (windows-latest)"]'
+# Required job names from ci.yml and baseline.yml, bound to GitHub Actions.
+CHECKS='[
+  {"context":"check (ubuntu-latest)","integration_id":15368},
+  {"context":"check (windows-latest)","integration_id":15368},
+  {"context":"measure (ubuntu-latest)","integration_id":15368},
+  {"context":"measure (windows-latest)","integration_id":15368},
+  {"context":"measure (macos-latest)","integration_id":15368},
+  {"context":"perf (ubuntu-latest)","integration_id":15368},
+  {"context":"perf (windows-latest)","integration_id":15368}
+]'
 echo "Proteksi main"
-if gh api -X PUT "repos/$REPO/branches/main/protection" --input - >/dev/null 2>proteksi.err <<EOF
+RULESET_ID="$(gh api "repos/$REPO/rulesets?includes_parents=false&per_page=100" --paginate \
+  --jq '.[] | select(.name == "Protect main" and .target == "branch" and .source_type == "Repository") | .id')"
+if [[ -n "$RULESET_ID" && ! "$RULESET_ID" =~ ^[0-9]+$ ]]; then
+  echo "Ambiguous Protect main rulesets; review the repository rulesets before retrying." >&2
+  exit 1
+fi
+METHOD=POST
+ENDPOINT="repos/$REPO/rulesets"
+if [[ -n "$RULESET_ID" ]]; then
+  METHOD=PUT
+  ENDPOINT="$ENDPOINT/$RULESET_ID"
+fi
+gh api -X "$METHOD" "$ENDPOINT" --input - >/dev/null <<EOF
 {
-  "required_status_checks": { "strict": true, "contexts": $CHECKS },
-  "enforce_admins": false,
-  "required_pull_request_reviews": { "required_approving_review_count": 0 },
-  "restrictions": null,
-  "required_linear_history": true,
-  "allow_force_pushes": false,
-  "allow_deletions": false
+  "name": "Protect main",
+  "target": "branch",
+  "enforcement": "active",
+  "bypass_actors": [],
+  "conditions": { "ref_name": { "include": ["refs/heads/main"], "exclude": [] } },
+  "rules": [
+    { "type": "deletion" },
+    { "type": "non_fast_forward" },
+    { "type": "required_linear_history" },
+    { "type": "pull_request", "parameters": {
+      "required_approving_review_count": 0,
+      "dismiss_stale_reviews_on_push": true,
+      "required_reviewers": [],
+      "require_code_owner_review": false,
+      "require_last_push_approval": false,
+      "required_review_thread_resolution": true,
+      "require_extra_approval_for_unattributed_changes": false,
+      "allowed_merge_methods": ["squash"]
+    } },
+    { "type": "required_status_checks", "parameters": {
+      "strict_required_status_checks_policy": true,
+      "do_not_enforce_on_create": false,
+      "required_status_checks": $CHECKS
+    } }
+  ]
 }
 EOF
-then
-  echo "  terpasang"
-  rm -f proteksi.err
-else
-  echo "  GAGAL memasang proteksi:" >&2
-  cat proteksi.err >&2; rm -f proteksi.err
-  echo "  Penyebab umum: branch main belum ada (push commit pertama dulu), atau repo privat di akun gratis." >&2
-fi
+echo "  ruleset terpasang"
 
 echo "Selesai."

@@ -1,5 +1,3 @@
-# Starter CI. Fase 0 melengkapinya: pin versi Bun, tambah job perf (ADR-006),
-# dan tambahkan nama job perf ke status check wajib (scripts/setup-github.sh).
 name: ci
 
 on:
@@ -56,3 +54,76 @@ jobs:
             );
           }
           console.log(`Native binary passed help/version and ${cases.length} source/binary cases, running outside the checkout.`);
+
+  perf:
+    name: perf (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      LIZZY_PERF_RUNNER: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - name: Measure initialized skeleton and enforce performance gate
+        shell: bun {0}
+        run: |
+          import { createHash } from "node:crypto";
+          import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+          import { cpus, release, tmpdir, totalmem } from "node:os";
+          import { join, resolve } from "node:path";
+          import { pathToFileURL } from "node:url";
+          const repository = process.cwd();
+          const resultPath = resolve(repository, "dist/perf-result.json");
+          mkdirSync(resolve(repository, "dist"), { recursive: true });
+          const report = {};
+          try {
+            const { measure } = await import(pathToFileURL(resolve(repository, "scripts/measure-perf.ts")).href);
+            const { checkPerformance } = await import(pathToFileURL(resolve(repository, "scripts/perf.ts")).href);
+            const { run } = await import(pathToFileURL(resolve(repository, "src/platform/process.ts")).href);
+            const binary = resolve(repository, "dist", process.platform === "win32" ? "agent.exe" : "agent");
+            report.environment = {
+              runner: process.env.LIZZY_PERF_RUNNER, bun: Bun.version,
+              os: process.platform, arch: process.arch, osRelease: release(),
+              cpuModels: cpus().map(cpu => cpu.model.trim()).sort(), memoryBytes: totalmem(),
+              image: process.env.ImageOS, imageVersion: process.env.ImageVersion,
+              commit: run(["git", "rev-parse", "HEAD"]).trim(), eventCommit: process.env.GITHUB_SHA,
+              buildCommand: [process.execPath, "run", "build"],
+              binarySha256: createHash("sha256").update(readFileSync(binary)).digest("hex"),
+              configuration: "Isolated empty home and working directory; native shell resolution."
+            };
+            const profile = mkdtempSync(join(tmpdir(), "lizzy-perf-"));
+            process.env.HOME = profile;
+            process.env.USERPROFILE = profile;
+            process.chdir(profile);
+            const current = measure([binary], binary, "agent-f00-v1", process.env.LIZZY_PERF_RUNNER);
+            report.current = current;
+            const baseline = JSON.parse(readFileSync(resolve(repository, "docs/perf/baseline.json"), "utf8"));
+            // T09 synthetic pipeline proof: preserve actual measurement and inject 21% binary growth only for comparison.
+            const reference = baseline.entries.find(entry => entry.key === current.key && entry.bun === current.bun && entry.workload === current.workload);
+            if (!reference) throw new Error(`Synthetic injection requires a matching baseline for ${current.key}.`);
+            const injected = { ...current, metrics: { ...current.metrics, binaryBytes: reference.metrics.binaryBytes * 1.21 } };
+            report.syntheticInjection = { metric: "binaryBytes", factor: 1.21, injected };
+            const failures = checkPerformance(baseline, injected);
+            report.failures = failures;
+            for (const failure of failures) console.error(failure);
+            process.exitCode = failures.length ? 1 : 0;
+          } catch (error) {
+            report.error = error instanceof Error ? error.message : String(error);
+            console.error(`Performance gate failed: ${report.error}`);
+            process.exitCode = 1;
+          } finally {
+            writeFileSync(resultPath, JSON.stringify(report, null, 2) + "\n");
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-${{ matrix.os }}
+          path: dist/perf-result.json
+          if-no-files-found: error
