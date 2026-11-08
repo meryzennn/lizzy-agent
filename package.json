@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "bun scripts/build.ts",
+    "perf": "bun scripts/perf.ts",
     "test": "bun test ./test",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src scripts test",

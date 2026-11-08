@@ -28,6 +28,15 @@ export function run(
 
 export const artifactBytes = (path: string): number => statSync(path).size;
 
+export async function reportIdleProbe(): Promise<boolean> {
+  if (process.env.LIZZY_PERF_PROBE !== "1") return false;
+  await Bun.sleep(200);
+  process.stdout.write(
+    `${JSON.stringify({ rss: process.memoryUsage().rss })}\n`,
+  );
+  return true;
+}
+
 export function platformKey(
   runner: string,
   machine = {

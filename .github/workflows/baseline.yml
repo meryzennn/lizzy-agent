@@ -57,8 +57,31 @@ jobs:
             os: process.platform, arch: process.arch, osRelease: release(),
             cpuModels: cpus().map(cpu => cpu.model.trim()).sort(), memoryBytes: totalmem(),
             image: process.env.ImageOS, imageVersion: process.env.ImageVersion,
-            commit: process.env.GITHUB_SHA, buildCommand,
+            commit: run(["git", "rev-parse", "HEAD"]).trim(), eventCommit: process.env.GITHUB_SHA, buildCommand,
             units: { versionMs: "milliseconds", idleRssBytes: "bytes", binaryBytes: "bytes" }
+          }, null, 2));
+      - run: bun run build
+      - name: Measure initialized skeleton agent
+        shell: bun {0}
+        run: |
+          import assert from "node:assert/strict";
+          import { resolve } from "node:path";
+          import { pathToFileURL } from "node:url";
+          const { measure } = await import(pathToFileURL(resolve(process.cwd(), "scripts/measure-perf.ts")).href);
+          const { run } = await import(pathToFileURL(resolve(process.cwd(), "src/platform/process.ts")).href);
+          const binary = resolve("dist", process.platform === "win32" ? "agent.exe" : "agent");
+          const measurement = measure([binary], binary, "agent-f00-v1", process.env.LIZZY_PERF_RUNNER);
+          const hello = await Bun.file("dist/hello-measurement.json").json();
+          const environment = await Bun.file("dist/environment.json").json();
+          assert.equal(measurement.key, hello.key);
+          assert.equal(measurement.bun, hello.bun);
+          assert.equal(measurement.key, environment.key);
+          assert.equal(measurement.bun, environment.bun);
+          assert.equal(environment.commit, run(["git", "rev-parse", "HEAD"]).trim());
+          await Bun.write("dist/agent-measurement.json", JSON.stringify(measurement, null, 2));
+          await Bun.write("dist/environment.json", JSON.stringify({
+            ...environment, agentBuildCommand: [process.execPath, "run", "build"], agentArtifact: binary,
+            workloads: { hello: "hello-v1", agent: "agent-f00-v1" }
           }, null, 2));
       - uses: actions/upload-artifact@v4
         with:
@@ -66,4 +89,5 @@ jobs:
           if-no-files-found: error
           path: |
             dist/hello-measurement.json
+            dist/agent-measurement.json
             dist/environment.json
