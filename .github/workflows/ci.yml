@@ -1,5 +1,3 @@
-# Starter CI. Fase 0 melengkapinya: pin versi Bun, tambah job perf (ADR-006),
-# dan tambahkan nama job perf ke status check wajib (scripts/setup-github.sh).
 name: ci
 
 on:
@@ -56,3 +54,65 @@ jobs:
             );
           }
           console.log(`Native binary passed help/version and ${cases.length} source/binary cases, running outside the checkout.`);
+
+  perf:
+    name: perf (${{ matrix.os }})
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      LIZZY_PERF_RUNNER: ${{ matrix.os }}
+      LIZZY_PERF_EVIDENCE: ${{ github.workspace }}/lizzy-paired-perf-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Initialize performance evidence
+        id: evidence
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:LIZZY_PERF_EVIDENCE | Out-Null
+          @{ stage = 'workflow-start'; outcome = 'started'; run = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" } | ConvertTo-Json | Set-Content -Encoding utf8 (Join-Path $env:LIZZY_PERF_EVIDENCE 'workflow-result.json')
+      - uses: actions/checkout@v4
+        id: checkout
+        with:
+          path: candidate
+      - uses: actions/setup-node@v4
+        id: node
+        with:
+          node-version: '24'
+      - name: Read trusted policy and fetch immutable reference
+        id: policy
+        working-directory: candidate
+        run: node --experimental-strip-types scripts/perf-ci.ts prepare
+      - uses: oven-sh/setup-bun@v2
+        id: bun
+        with:
+          bun-version: ${{ steps.policy.outputs.bun-version }}
+      - name: Build and measure the native pair
+        id: pair
+        working-directory: candidate
+        run: bun scripts/perf-ci.ts measure
+      - name: Retain workflow setup outcomes
+        if: always()
+        shell: pwsh
+        env:
+          STEP_OUTCOMES: ${{ toJSON(steps) }}
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:LIZZY_PERF_EVIDENCE | Out-Null
+          @{
+            stage = 'workflow-outcomes'
+            steps = ($env:STEP_OUTCOMES | ConvertFrom-Json)
+            runner = $env:RUNNER_OS
+            arch = $env:RUNNER_ARCH
+            image = $env:ImageOS
+            imageVersion = $env:ImageVersion
+            diagnostics = "Actions logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          } | ConvertTo-Json -Depth 20 | Set-Content -Encoding utf8 (Join-Path $env:LIZZY_PERF_EVIDENCE 'workflow-result.json')
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-${{ matrix.os }}
+          path: ${{ env.LIZZY_PERF_EVIDENCE }}/*result.json
+          if-no-files-found: error

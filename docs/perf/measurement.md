@@ -2,8 +2,9 @@
 
 This spike measures the Bun compiled hello-runtime floor, workload `hello-v1`.
 It does not initialize the agent, configuration, shell, provider, or TUI.
-The approved `baseline.json`, absolute binary target, and permanent >20%
-regression gate belong to F00-T08/T09; no baseline or target is set here.
+The original evidence below remains unchanged. T09's measured baseline and
+absolute cap proposals are documented in the appended section and require
+`spec-change` review before adoption.
 
 ## Method and reproduction
 
@@ -137,3 +138,205 @@ The first run ([42468248389](https://github.com/meryzennn/lizzy-agent/actions/ru
 Hosted runner hardware changed between runs (EPYC 7763 to EPYC 9V74 on Linux; Xeon 8370C to EPYC 9V45 on Windows), and the keys changed accordingly. These values are observations for distinct machine classes, not a cross-machine regression comparison. Startup also includes scheduler, antivirus, and process-launch variability; the warmups do not remove all such effects. macOS is native ARM64, not an x64 comparison. No numerical target or approved baseline is inferred.
 
 Validation: the new suite first failed with the measurement module absent, then all 13 new tests passed. Local `bun run check` passed (27 tests, 99 assertions); CI ran frozen installs and the normal checks without skipping tests. Existing sync-issues lint notices (one warning and two informational suggestions) remain unchanged. Source-only tests verify the protocol, not native binary performance. No agent/TUI performance, permanent regression gate, or later phase behavior is implemented or claimed.
+
+## T09 measured baseline proposal
+
+T09 assembles eight actual records from T08: native hello and initialized-agent pairs on Linux, Windows, macOS ARM64 and local Windows. [baseline.json](baseline.json) preserves every original sample and full identity. [ADR-006](../adr/006-gerbang-performa.md#baseline-fase-0) lists the measured values and proposed byte caps; adoption remains subject to `spec-change` review.
+
+### Inputs and audit
+
+The three CI pairs come from [T08 run 42488687470](https://github.com/meryzennn/lizzy-agent/actions/runs/42488687470), checkout `f91a1bec1782af523b91adadc1fe3d75d9949039`. The GitHub commit API confirms parents `fa78cd66b0a5b36b390e9c8e2fbe70788983380b` and `23ff348cdd9d560144c691c5691515cedcfce4b1`. The local pair belongs to the latter head. Later numerical comparator changes did not alter the measured application. T09 does not relabel those SHAs as its own benchmark results.
+
+Retained input root: `C:/Users/RYZEN/.local/share/lizzy-agent/reports/f00-t08-perf-checks/`. CI pairs are in `ci-native/baseline-{ubuntu,windows,macos}-latest/`; the local pair is in `windows-native/`. Each directory contains `hello-measurement.json`, `agent-measurement.json`, and `environment.json`. The resume audit revalidated the three CI file hashes against `ci-native/verified-pairing.json`, full key/Bun/workload pairing, 15 startup and five RSS samples, exact medians, native architecture, image, units, build argv and checkout provenance. CI hardware hashes were independently recomputed from sorted CPU models/core counts and total RAM; the local key was checked against this machine without publishing its hostname.
+
+| Runner | Source artifact |
+|---|---|
+| ubuntu-latest | [13620925867](https://github.com/meryzennn/lizzy-agent/actions/runs/42488687470/artifacts/13620925867) |
+| windows-latest | [13619564811](https://github.com/meryzennn/lizzy-agent/actions/runs/42488687470/artifacts/13619564811) |
+| macos-latest | [13620113131](https://github.com/meryzennn/lizzy-agent/actions/runs/42488687470/artifacts/13620113131) |
+| local Windows | Retained native pair and binary hashes in `windows-native/` |
+
+The following environment records and SHA-256 digests preserve build and checkout evidence alongside the baseline after hosted artifacts expire. Raw measurements and samples are stored in `baseline.json`, with only the derived `binaryLimitBytes` added.
+
+#### ubuntu-latest
+
+Environment:
+
+```json
+{"key":"linux-x64-ci-ubuntu-latest-a87e82b151e5d0e51ce52729bbe6b0625cc3f34c07332ce4d8f1a5f146830e17","runner":"ubuntu-latest","bun":"1.4.2","os":"linux","arch":"x64","osRelease":"7.0.0-1019-azure","cpuModels":["AMD EPYC 7763 64-Core Processor","AMD EPYC 7763 64-Core Processor","AMD EPYC 7763 64-Core Processor","AMD EPYC 7763 64-Core Processor"],"memoryBytes":16759439360,"image":"ubuntu26","imageVersion":"20261101.186.1","commit":"f91a1bec1782af523b91adadc1fe3d75d9949039","eventCommit":"f91a1bec1782af523b91adadc1fe3d75d9949039","buildCommand":["/home/runner/.bun/bin/bun","build","--compile","spikes/boot.ts","--outfile","/home/runner/work/lizzy-agent/lizzy-agent/dist/hello"],"units":{"versionMs":"milliseconds","idleRssBytes":"bytes","binaryBytes":"bytes"},"agentBuildCommand":["/home/runner/.bun/bin/bun","run","build"],"agentArtifact":"/home/runner/work/lizzy-agent/lizzy-agent/dist/agent","workloads":{"hello":"hello-v1","agent":"agent-f00-v1"}}
+```
+
+Input SHA-256:
+
+```json
+{
+  "hello-measurement.json": "01f8662567d6badf7196cc5ed9bdea976f78e82440a6453257a33bb30d916e56",
+  "agent-measurement.json": "f246fe1312a35e3c69beebe52e9a11216bf4d510ee0671acc6668812f81103de",
+  "environment.json": "b1ab884b87a39e8fe7eae5832543a9acf349ca7b61082d5c1e3ae7bd28dfff3c"
+}
+```
+
+#### windows-latest
+
+Environment:
+
+```json
+{"key":"win32-x64-ci-windows-latest-9bc3985f61cc9b641f81804460042c55a88f521cd81857b156be6fdca03ae241","runner":"windows-latest","bun":"1.4.2","os":"win32","arch":"x64","osRelease":"10.0.26100","cpuModels":["AMD EPYC 7763 64-Core Processor","AMD EPYC 7763 64-Core Processor","AMD EPYC 7763 64-Core Processor","AMD EPYC 7763 64-Core Processor"],"memoryBytes":17174360064,"image":"win25-vs2026","imageVersion":"20261103.298.1","commit":"f91a1bec1782af523b91adadc1fe3d75d9949039","eventCommit":"f91a1bec1782af523b91adadc1fe3d75d9949039","buildCommand":["C:\\Users\\runneradmin\\.bun\\bin\\bun.exe","build","--compile","spikes/boot.ts","--outfile","D:\\a\\lizzy-agent\\lizzy-agent\\dist\\hello.exe"],"units":{"versionMs":"milliseconds","idleRssBytes":"bytes","binaryBytes":"bytes"},"agentBuildCommand":["C:\\Users\\runneradmin\\.bun\\bin\\bun.exe","run","build"],"agentArtifact":"D:\\a\\lizzy-agent\\lizzy-agent\\dist\\agent.exe","workloads":{"hello":"hello-v1","agent":"agent-f00-v1"}}
+```
+
+Input SHA-256:
+
+```json
+{
+  "hello-measurement.json": "bf23c6e4c73e2e15cb3472515762b249e61602f7ebeae1103a48fa4431b4d9f3",
+  "agent-measurement.json": "c0b6eb725fc2196bb480377d1a724d92fd677492ce1325522d5fb8faad8a1f70",
+  "environment.json": "11730b8161da8ccd33b6126e2ad6e39eb04021eb07f3fadbfd58c3686d950921"
+}
+```
+
+#### macos-latest
+
+Environment:
+
+```json
+{"key":"darwin-arm64-ci-macos-latest-8b3de9584821c8d462d2a77722e0ac7040e88cf701134a0eefe4272d7c161c5d","runner":"macos-latest","bun":"1.4.2","os":"darwin","arch":"arm64","osRelease":"25.6.0","cpuModels":["Apple M1 (Virtual)","Apple M1 (Virtual)","Apple M1 (Virtual)"],"memoryBytes":7516192768,"image":"macos26","imageVersion":"20261102.0473.1","commit":"f91a1bec1782af523b91adadc1fe3d75d9949039","eventCommit":"f91a1bec1782af523b91adadc1fe3d75d9949039","buildCommand":["/Users/runner/work/_temp/bun-official/bun-darwin-aarch64/bun","build","--compile","spikes/boot.ts","--outfile","/Users/runner/work/lizzy-agent/lizzy-agent/dist/hello"],"units":{"versionMs":"milliseconds","idleRssBytes":"bytes","binaryBytes":"bytes"},"agentBuildCommand":["/Users/runner/work/_temp/bun-official/bun-darwin-aarch64/bun","run","build"],"agentArtifact":"/Users/runner/work/lizzy-agent/lizzy-agent/dist/agent","workloads":{"hello":"hello-v1","agent":"agent-f00-v1"}}
+```
+
+Input SHA-256:
+
+```json
+{
+  "hello-measurement.json": "6b5d933a3a6e8406d83e32706bbc341d0449ff190ad6244fc9bccfc32a79cb8b",
+  "agent-measurement.json": "d6143dd571ce7461ec5ecd61db829e30c7f1050c4cf3148a95c53f336b1d091e",
+  "environment.json": "b6228d71a4dfcfee204113a8f2127115a8450067cdcbd57c0dc82619986e495f"
+}
+```
+
+#### local
+
+Environment:
+
+```json
+{"key":"win32-x64-local-fd20151120bdca8990221d9210c8acc3f01fd1898175038af2d68fd85c4bdddd","runner":"local","bun":"1.4.2","commit":"23ff348cdd9d560144c691c5691515cedcfce4b1","os":"win32","arch":"x64","osRelease":"10.0.22631","cpuModels":["AMD Ryzen 5 5500","AMD Ryzen 5 5500","AMD Ryzen 5 5500","AMD Ryzen 5 5500","AMD Ryzen 5 5500","AMD Ryzen 5 5500","AMD Ryzen 5 5500","AMD Ryzen 5 5500","AMD Ryzen 5 5500","AMD Ryzen 5 5500","AMD Ryzen 5 5500","AMD Ryzen 5 5500"],"memoryBytes":17043591168,"helloBuildCommand":["C:\\Users\\RYZEN\\.local\\share\\lizzy-agent\\toolchains\\bun-1.4.2\\bun-windows-x64\\bun.exe","build","--compile","spikes/boot.ts","--outfile","D:\\coding\\lizzy-agent\\dist\\hello.exe"],"agentBuildCommand":["C:\\Users\\RYZEN\\.local\\share\\lizzy-agent\\toolchains\\bun-1.4.2\\bun-windows-x64\\bun.exe","run","build"],"binarySha256":{"hello":"bfcd1304b5d0a518401e7ece7720bd25750f5ec6fb42fecc8bd16d6762040483","agent":"34b44fc31ea094ba2c2c7b9d60602b95b249d432d1221b71a616dff0da7dac5c"},"configuration":"Isolated empty home and working directory; real native shell resolution.","workload":"initialized skeleton","units":{"versionMs":"milliseconds","idleRssBytes":"bytes","binaryBytes":"bytes"}}
+```
+
+Input SHA-256:
+
+```json
+{
+  "hello-measurement.json": "be5d6aaf6de53b74189233808fa4295d8368adf55e01b27d2e0128e44cee27ca",
+  "agent-measurement.json": "1b7aa77eb1aca57c331677bb46b289e2de51a6dda4af646d8ba2990ffa4b7da4",
+  "environment.json": "530631a6a01dc5dc995ac65fcee47ec28b43be95a2d49b60387e7a7c8a88eb9c"
+}
+```
+
+### Assembly, limits and matching
+
+Run `bun scripts/assemble-baseline.ts <hello.json> <agent.json> ...` from the repository root with the real retained files. It requires complete native Linux x64, Windows x64 and macOS ARM64 pairs on pinned Bun 1.4.2. Optional local Windows and additional CI hardware records must also be complete pairs. Every full key/Bun/workload tuple is unique; incorrect counts, medians, byte values, identities or pairings fail before writing. Creation uses exclusive `wx` mode, so an existing baseline cannot be overwritten even if another process creates it after the initial check. Further changes require explicit measured evidence and review.
+
+The illustrative plan loop assumed exactly one hardware pair per CI class. The implemented minimum-six-record contract permits additional complete, independently measured hardware pairs because hosted fingerprints vary. It still selects exactly one record for a full key/Bun/workload; neither CPU model, core count, RAM nor identity is normalized. Uncovered hardware fails with its full key. Adding coverage requires native hello/agent evidence and environment/build/checkout provenance, rather than copying a nearby class or rerunning until a known runner appears.
+
+Each absolute cap is the measured binary byte count times 1.2, rounded upward to a byte. This is a measured-data proposal with the same initial growth budget as the relative comparator. The independent absolute cap remains strict; the comparator retains its reviewed one-ULP correction only at the fractional 20% relative boundary. No guessed 60 MB ceiling or broad timing tolerance is used.
+
+### Routine gate and local reproduction
+
+The separate three-OS measurement workflow is preserved, including macOS's official release API download, SHA-256 check and exact Bun version/ARM64 checks. CI adds `perf (ubuntu-latest)` and `perf (windows-latest)`, each building a real native agent, measuring `agent-f00-v1` in an isolated empty home and working directory, and calling `checkPerformance`. The profile matches the retained empty initialized-skeleton workload, including native shell resolution. Temporary Actions scripts import repository modules through absolute file URLs. The comparator runs after measurement, so a missing, invalid or unmatched baseline still retains current measurements and diagnostic metadata in `perf-<runner>/perf-result.json`; comparison failures return a failing job without `continue-on-error`.
+
+For local reproduction, use the pinned toolchain, build normally, then measure the absolute native binary while setting the measurement child environment's `HOME` and `USERPROFILE` to a newly created empty directory and using that directory as cwd. Call `measure([binary], binary, "agent-f00-v1", "local")`, save the JSON, and run `bun run perf <saved-measurement.json>` from the repository root. A plain `bun run perf` in a customized home/project can initialize a different configuration and is not the retained empty-skeleton benchmark.
+
+Startup remains warm-cache process launch/exit timing, with three warmups and 15 retained samples. RSS remains five delayed child snapshots, taken 200 ms after config and shell initialization. For example, the retained local agent startup samples range from 64.4989 to 213.8613 ms while their median is 68.1508 ms; all samples remain available. These numbers do not measure peak RSS, model calls, interactive TUI latency or a cold OS boot. Timing noise and exact hardware coverage must be reviewed before making hosted gates required.
+
+### T09 pipeline evidence
+
+[PR #21](https://github.com/meryzennn/lizzy-agent/pull/21) first ran the explicitly
+marked synthetic injection at head `3ebd08d5bb025cbf5a31ac7a9bdd94c382e08256`,
+measured merge checkout `84c471fdefd1d5b452d34c77264121ed19d1a8f5`.
+The [Windows perf job](https://github.com/meryzennn/lizzy-agent/actions/runs/42508001792/job/128814723104)
+failed with `binaryBytes: 104377349.11999999 bytes exceeds 120% of baseline
+86262272 bytes` and the independent absolute cap of `103514727` bytes.
+The injected value is exactly the matching reference times 1.21. The artifact
+separately preserves the actual native measurement: startup 44.5105 ms, child
+RSS 27684864 bytes, binary 86262272 bytes. This proves pipeline failure
+propagation; it is not an observed application regression. The next commit
+removes the injection and leaves the baseline unchanged.
+
+The [Linux perf job](https://github.com/meryzennn/lizzy-agent/actions/runs/42508001792/job/128814722877)
+failed before injection because its full key was uncovered:
+`linux-x64-ci-ubuntu-latest-de1a12e4f64fc5690f478bcc56157683549c74fb265a3c4ad93b859610a17b3b`.
+It had four `INTEL(R) XEON(R) PLATINUM 8573C` CPUs and 16758398976 RAM bytes.
+The separate [native measurement run](https://github.com/meryzennn/lizzy-agent/actions/runs/42508001861)
+used another Linux key,
+`linux-x64-ci-ubuntu-latest-e9c2dfd08a0b7b068113caa881c99560f7f7aa4b8b8fdc899b4fd25316afbc09`,
+four `Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz` CPUs and 16758403072
+RAM bytes. Its actual complete pair is retained as candidate evidence, not
+substituted for either the approved-key reference or the uncovered job's key.
+The perf artifacts retain measurements and errors even when matching fails.
+
+### Bounded collection of uncovered hardware
+
+After the normal run also failed on uncovered Linux and Windows hardware, the
+coordinator authorized one bounded collection cycle followed by one clean
+validation cycle. An uncovered perf job now compiles hello natively in that
+same job and measures it in the same isolated empty home/cwd as the initialized
+agent. It verifies the full key and Bun agree, then retains the pair as
+`perf-candidate.json` with status `unapproved`. The job still fails through the
+normal comparator. Missing/invalid baselines and real regressions remain failures;
+collection never writes a baseline or supplies a fallback.
+
+Candidate provenance includes exact native build argv, measured checkout/event
+SHA, image and hardware, artifact SHA-256, hashes of tracked runtime source and
+build inputs, declared dependencies and installed Zod version. Before staging
+new coverage, these inputs must match the T08 reference application at
+`23ff348cdd9d560144c691c5691515cedcfce4b1` (the measured merge checkout's head).
+A separate candidate baseline and append-only semantic diff preserve every
+existing row and cap. Coverage proposals must not come from changed application
+code or raise a matching reference to clear a regression. Any further unknown
+hardware or real regression after the single validation cycle requires a
+stable-runner/policy decision rather than another collection/rerun loop.
+
+### Append-only coverage proposal
+
+The bounded collection cycle ran at head `ca7001df018b37a231128786bc59732b61bbd4ce`, merge checkout `7ca935b6218d3f8c47e11cad5f42a5974d83b747`. [CI run 42509505833](https://github.com/meryzennn/lizzy-agent/actions/runs/42509505833) retained genuine same-job candidate pairs in both failing perf artifacts; [native run 42509505894](https://github.com/meryzennn/lizzy-agent/actions/runs/42509505894) passed all three measurement jobs. Both check jobs passed. Candidate retention did not make either failing gate pass.
+
+The staging step proposes eight additional measurements, four complete hardware pairs, for a total of 16 entries. It preserves all eight initial rows, samples and caps exactly. A separate `f00-t09-baseline-candidate.json` and `f00-t09-baseline-append-diff.json` were generated under `C:/Users/RYZEN/.local/share/lizzy-agent/reports/` before an explicit append-only edit to the PR baseline. The diff has zero changed or removed entries. All rows and caps remain proposals pending `spec-change` adoption review.
+
+GitHub commit/tree APIs confirmed that every runtime source/build-input Git blob in all three new measured checkouts matches T08 head `23ff348cdd9d560144c691c5691515cedcfce4b1`: all six src files, spikes/boot.ts, scripts/build.ts, package.json, bun.lock, .bun-version and tsconfig.json. Same-job candidate SHA-256 input maps also matched those exact reference bytes. Every pair uses native Bun 1.4.2 and installed Zod 4.6.7, verified by direct candidate metadata or successful frozen-install logs with zod@4.6.7. No changed application was used to seed a hardware reference. The full proof is retained in `f00-t09-source-equivalence.json` and `f00-t09-candidate-audit.json`.
+
+Already-covered keys retain their original references. For a new key with several genuine pairs, the earliest retained complete pair is used; later measurements do not raise that reference. Agent-only observations without a genuine pair are excluded. Existing CPU/core/RAM/runner/Bun/workload matching and the one-ULP relative boundary correction remain unchanged.
+
+| Full new hardware identity | Workload | Startup median (ms) | Child RSS median (bytes) | Binary (bytes) | Proposed cap (bytes) |
+|---|---|---:|---:|---:|---:|
+| linux-x64-ci-ubuntu-latest-e9c2dfd08a0b7b068113caa881c99560f7f7aa4b8b8fdc899b4fd25316afbc09 | hello-v1 | 14.464365 | 25026560 | 81315296 | 97578356 |
+| linux-x64-ci-ubuntu-latest-e9c2dfd08a0b7b068113caa881c99560f7f7aa4b8b8fdc899b4fd25316afbc09 | agent-f00-v1 | 20.189237 | 41115648 | 81487328 | 97784794 |
+| linux-x64-ci-ubuntu-latest-4356683604dd017b6088212653b433c760d8a36d81190bc3058397ff5838724c | hello-v1 | 12.703836 | 25026560 | 81315296 | 97578356 |
+| linux-x64-ci-ubuntu-latest-4356683604dd017b6088212653b433c760d8a36d81190bc3058397ff5838724c | agent-f00-v1 | 17.013956 | 40767488 | 81487328 | 97784794 |
+| linux-x64-ci-ubuntu-latest-ffd9a58634dfb1cb23f79cc93eab85ea753a383b8f14cc527c9a45a269812efa | hello-v1 | 9.896977 | 24760320 | 81315296 | 97578356 |
+| linux-x64-ci-ubuntu-latest-ffd9a58634dfb1cb23f79cc93eab85ea753a383b8f14cc527c9a45a269812efa | agent-f00-v1 | 14.588076 | 40984576 | 81487328 | 97784794 |
+| win32-x64-ci-windows-latest-e19834233d8a1136a73719aac341deb37ef9b6d84d287b106d5ad564f7406e46 | hello-v1 | 30.262400 | 19914752 | 86087168 | 103304602 |
+| win32-x64-ci-windows-latest-e19834233d8a1136a73719aac341deb37ef9b6d84d287b106d5ad564f7406e46 | agent-f00-v1 | 39.763700 | 27725824 | 86262272 | 103514727 |
+
+The resulting proposed support set contains four exact Linux x64 hardware keys, two exact Windows x64 CI keys, the original macOS ARM64 key, and the original local Windows key, each with distinct hello/agent records. This is a finite observed support set, not evidence of stable hosted coverage. Unknown hardware still retains unapproved paired evidence and exits nonzero. Only one clean validation cycle follows this staging step; further unknown keys or real regressions stop collection/rerun loops and require a stable-runner or explicit identity-policy decision.
+
+Audited provenance for `linux-x64-ci-ubuntu-latest-e9c2dfd08a0b7b068113caa881c99560f7f7aa4b8b8fdc899b4fd25316afbc09`: [source job](https://github.com/meryzennn/lizzy-agent/actions/runs/42508001861/job/128814723881).
+
+```json
+{"environment":{"key":"linux-x64-ci-ubuntu-latest-e9c2dfd08a0b7b068113caa881c99560f7f7aa4b8b8fdc899b4fd25316afbc09","runner":"ubuntu-latest","bun":"1.4.2","os":"linux","arch":"x64","osRelease":"7.0.0-1019-azure","cpuModels":["Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz","Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz","Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz","Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz"],"memoryBytes":16758403072,"image":"ubuntu26","imageVersion":"20261101.186.1","commit":"84c471fdefd1d5b452d34c77264121ed19d1a8f5","eventCommit":"84c471fdefd1d5b452d34c77264121ed19d1a8f5","buildCommand":["/home/runner/.bun/bin/bun","build","--compile","spikes/boot.ts","--outfile","/home/runner/work/lizzy-agent/lizzy-agent/dist/hello"],"units":{"versionMs":"milliseconds","idleRssBytes":"bytes","binaryBytes":"bytes"},"agentBuildCommand":["/home/runner/.bun/bin/bun","run","build"],"agentArtifact":"/home/runner/work/lizzy-agent/lizzy-agent/dist/agent","workloads":{"hello":"hello-v1","agent":"agent-f00-v1"}},"inputSha256":{"hello-measurement.json":"fa04abbdb8c74e3c8c071b03ca67778e8a20c689afe0542e1f338c912c0df966","agent-measurement.json":"0ff45bdfcd989b67adebcad2e845521002d44a770ee1cc6e009055b69f9525f4"},"referenceApplication":"23ff348cdd9d560144c691c5691515cedcfce4b1","sourceBlobsMatch":true,"installedZodEvidence":"4.6.7"}
+```
+
+Audited provenance for `linux-x64-ci-ubuntu-latest-4356683604dd017b6088212653b433c760d8a36d81190bc3058397ff5838724c`: [source job](https://github.com/meryzennn/lizzy-agent/actions/runs/42508206871/job/128815346552).
+
+```json
+{"environment":{"key":"linux-x64-ci-ubuntu-latest-4356683604dd017b6088212653b433c760d8a36d81190bc3058397ff5838724c","runner":"ubuntu-latest","bun":"1.4.2","os":"linux","arch":"x64","osRelease":"7.0.0-1019-azure","cpuModels":["AMD EPYC 9V74 80-Core Processor","AMD EPYC 9V74 80-Core Processor","AMD EPYC 9V74 80-Core Processor","AMD EPYC 9V74 80-Core Processor"],"memoryBytes":16759439360,"image":"ubuntu26","imageVersion":"20261101.186.1","commit":"a6af9753030f0783c84830d7dc89e3cd3eee71ac","eventCommit":"a6af9753030f0783c84830d7dc89e3cd3eee71ac","buildCommand":["/home/runner/.bun/bin/bun","build","--compile","spikes/boot.ts","--outfile","/home/runner/work/lizzy-agent/lizzy-agent/dist/hello"],"units":{"versionMs":"milliseconds","idleRssBytes":"bytes","binaryBytes":"bytes"},"agentBuildCommand":["/home/runner/.bun/bin/bun","run","build"],"agentArtifact":"/home/runner/work/lizzy-agent/lizzy-agent/dist/agent","workloads":{"hello":"hello-v1","agent":"agent-f00-v1"}},"inputSha256":{"hello-measurement.json":"8837d4f65e3806eea312e437eecf369700f202edd64140e49cf625cc9256d61e","agent-measurement.json":"f44b8de669df6b4b1ae3a644dee2f1f76c3000621447788165b659bd007a1f2f"},"referenceApplication":"23ff348cdd9d560144c691c5691515cedcfce4b1","sourceBlobsMatch":true,"installedZodEvidence":"4.6.7"}
+```
+
+Audited provenance for `linux-x64-ci-ubuntu-latest-ffd9a58634dfb1cb23f79cc93eab85ea753a383b8f14cc527c9a45a269812efa`: [source job](https://github.com/meryzennn/lizzy-agent/actions/runs/42509505833/job/128819282661).
+
+```json
+{"environment":{"runner":"ubuntu-latest","bun":"1.4.2","os":"linux","arch":"x64","osRelease":"7.0.0-1019-azure","cpuModels":["Intel(R) Xeon(R) 6973P-C","Intel(R) Xeon(R) 6973P-C","Intel(R) Xeon(R) 6973P-C","Intel(R) Xeon(R) 6973P-C"],"memoryBytes":16758403072,"image":"ubuntu26","imageVersion":"20261101.186.1","commit":"7ca935b6218d3f8c47e11cad5f42a5974d83b747","eventCommit":"7ca935b6218d3f8c47e11cad5f42a5974d83b747","buildCommand":["/home/runner/.bun/bin/bun","run","build"],"binarySha256":"783ff3b83d0a7900d5e4786c177030096f48427b0b6d57b7b977392c5a2b4a17","buildInputSha256":{".bun-version":"b99b4c7cdf236f59bc9f65d963deaecae3b16a7dad87939cacb9057f7664daee","bun.lock":"d21349c5b6562d5543f712fe8b958f1439c571b88e9b2fc4fa2d8991183f109f","package.json":"f41ae99c0913c72bc7560add022e1be678c208ea6b7f385b366b8284c452386e","scripts/build.ts":"3b1bd668c6245291bf217f9d4b90763895702c77316a41decd55e80874d9fc35","spikes/boot.ts":"a37bcc539da8a2e451647fa62b62f5e1e467a1116abae272f4bcfee50afda209","src/app.ts":"a0e0b2d37dec963cb522cdeff258131214a60868943290aa2eae62f8eeccecff","src/cli.ts":"37d0b2eb8371bfd142f0b0ec56b6dd42b924c40df6d126d2e28f48f307c24360","src/config.ts":"4151e47426330fab29f032c7d749d4ce4a6b0a687b69c68fd049a79625b1c871","src/platform/config.ts":"0d30b31885582f4a9bd4966e70a1584ffcf9b8e443447c92b67739f5c582a53f","src/platform/process.ts":"87da7f7c6acbe3aaed17309a5431851de3d0452f3c6f8d8d0eefd0035001a6ee","src/platform/shell.ts":"292e08d592f4942ffe6b4789dcfff9a7f7285762647c98676c697192281b31cf","tsconfig.json":"b5052e00adad4c720958bbe2debb7c040929d3bc6fe7b1b684c8e54306410292"},"dependencies":{"zod":"4.6.7"},"installedZod":"4.6.7","configuration":"Isolated empty home and working directory; native shell resolution.","key":"linux-x64-ci-ubuntu-latest-ffd9a58634dfb1cb23f79cc93eab85ea753a383b8f14cc527c9a45a269812efa","helloBuildCommand":["/home/runner/.bun/bin/bun","build","--compile","spikes/boot.ts","--outfile","/home/runner/work/lizzy-agent/lizzy-agent/dist/hello"],"helloBinarySha256":"f9619c9402582d47d0a3101d3e54b42d2b19d46f98d5e2c486c6e28ee978c90e"},"inputSha256":{"hello-measurement.json":"706f914dd780f6701e39b062e4483250da30b3e0eb3144e4fa451ffc8c1dc4fb","agent-measurement.json":"d5ae5681587b97210531755750b4e063c22a9089c731347c42311709f06dba3e"},"referenceApplication":"23ff348cdd9d560144c691c5691515cedcfce4b1","sourceBlobsMatch":true,"installedZodEvidence":"4.6.7"}
+```
+
+Audited provenance for `win32-x64-ci-windows-latest-e19834233d8a1136a73719aac341deb37ef9b6d84d287b106d5ad564f7406e46`: [source job](https://github.com/meryzennn/lizzy-agent/actions/runs/42509505833/job/128819282995).
+
+```json
+{"environment":{"runner":"windows-latest","bun":"1.4.2","os":"win32","arch":"x64","osRelease":"10.0.26100","cpuModels":["AMD EPYC 9V74 80-Core Processor","AMD EPYC 9V74 80-Core Processor","AMD EPYC 9V74 80-Core Processor","AMD EPYC 9V74 80-Core Processor"],"memoryBytes":17174360064,"image":"win25-vs2026","imageVersion":"20261103.298.1","commit":"7ca935b6218d3f8c47e11cad5f42a5974d83b747","eventCommit":"7ca935b6218d3f8c47e11cad5f42a5974d83b747","buildCommand":["C:\\Users\\runneradmin\\.bun\\bin\\bun.exe","run","build"],"binarySha256":"34b44fc31ea094ba2c2c7b9d60602b95b249d432d1221b71a616dff0da7dac5c","buildInputSha256":{".bun-version":"b99b4c7cdf236f59bc9f65d963deaecae3b16a7dad87939cacb9057f7664daee","bun.lock":"d21349c5b6562d5543f712fe8b958f1439c571b88e9b2fc4fa2d8991183f109f","package.json":"f41ae99c0913c72bc7560add022e1be678c208ea6b7f385b366b8284c452386e","scripts/build.ts":"3b1bd668c6245291bf217f9d4b90763895702c77316a41decd55e80874d9fc35","spikes/boot.ts":"a37bcc539da8a2e451647fa62b62f5e1e467a1116abae272f4bcfee50afda209","src/app.ts":"a0e0b2d37dec963cb522cdeff258131214a60868943290aa2eae62f8eeccecff","src/cli.ts":"37d0b2eb8371bfd142f0b0ec56b6dd42b924c40df6d126d2e28f48f307c24360","src/config.ts":"4151e47426330fab29f032c7d749d4ce4a6b0a687b69c68fd049a79625b1c871","src/platform/config.ts":"0d30b31885582f4a9bd4966e70a1584ffcf9b8e443447c92b67739f5c582a53f","src/platform/process.ts":"87da7f7c6acbe3aaed17309a5431851de3d0452f3c6f8d8d0eefd0035001a6ee","src/platform/shell.ts":"292e08d592f4942ffe6b4789dcfff9a7f7285762647c98676c697192281b31cf","tsconfig.json":"b5052e00adad4c720958bbe2debb7c040929d3bc6fe7b1b684c8e54306410292"},"dependencies":{"zod":"4.6.7"},"installedZod":"4.6.7","configuration":"Isolated empty home and working directory; native shell resolution.","key":"win32-x64-ci-windows-latest-e19834233d8a1136a73719aac341deb37ef9b6d84d287b106d5ad564f7406e46","helloBuildCommand":["C:\\Users\\runneradmin\\.bun\\bin\\bun.exe","build","--compile","spikes/boot.ts","--outfile","D:\\a\\lizzy-agent\\lizzy-agent\\dist\\hello.exe"],"helloBinarySha256":"bfcd1304b5d0a518401e7ece7720bd25750f5ec6fb42fecc8bd16d6762040483"},"inputSha256":{"hello-measurement.json":"0c1abb36aaa095563f18e9a19c053062220cf82ad5754db78b03b61248f218ae","agent-measurement.json":"e61ec3a27e96e5c39b5898c73bb44dde326a835e8d871f683ff8034d0f7bc0ce"},"referenceApplication":"23ff348cdd9d560144c691c5691515cedcfce4b1","sourceBlobsMatch":true,"installedZodEvidence":"4.6.7"}
+```

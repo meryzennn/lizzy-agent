@@ -72,7 +72,7 @@ Tipe: `feat`, `fix`, `test`, `docs`, `perf`, `refactor`, `chore`, `ci`. Commit k
 
 - Judul: `<type>(fNN): <ringkasan> [FNN-TMM]` — ini yang jadi commit di `main` setelah squash.
 - Body: template `.github/pull_request_template.md`, wajib `Closes #N`.
-- Status check wajib: `check (ubuntu-latest)`, `check (windows-latest)`, dan job perf setelah Fase 0 menambahkannya.
+- Required checks: `check (ubuntu-latest)`, `check (windows-latest)`, `measure (ubuntu-latest)`, `measure (windows-latest)`, `measure (macos-latest)`, `perf (ubuntu-latest)`, and `perf (windows-latest)`. The two perf checks are T09's proposed additions pending baseline and ruleset review.
 - Review: kamu. Claude Code tidak pernah merge.
 - PR yang mengubah ADR, prinsip, atau baseline performa diberi label `spec-change` dan dijelaskan di body.
 
@@ -126,4 +126,23 @@ Perbaikan setelah rilis memakai versi patch (`v0.1.1`) dari `main`; tidak ada br
 
 ## 10. Proteksi branch
 
-`scripts/setup-github.sh` memasang proteksi `main`: wajib PR (0 approval, karena kamu tidak bisa meng-approve PR sendiri), status check wajib, riwayat linear, tanpa force push dan tanpa hapus. Di repo **privat** dengan akun GitHub gratis, proteksi branch tidak tersedia; di situ yang menjaga adalah aturan deny di `.claude/settings.json` dan disiplin kamu.
+`scripts/setup-github.sh` idempotently creates or updates the repository branch
+ruleset **Protect main**. It requires PRs with squash as the only merge method,
+zero required approvals for the solo workflow, resolved conversations and stale
+review dismissal. It preserves linear history, blocks deletion and force pushes,
+allows no bypass actors, and requires all seven checks above from GitHub Actions
+app **15368**, tested against the latest base. Code owner, last push and extra
+approval for unattributed changes remain disabled. Ambiguous rulesets and lookup
+or update failures exit nonzero without reporting a successful finish.
+
+At T09 dispatch, active ruleset **26794111** requires the two check and three
+measurement jobs. The code prepares two additional perf requirements; it does
+not change live settings. The coordinator/user reviews the baseline, CI evidence
+and exact JSON payload before applying a focused `PUT
+repos/meryzennn/lizzy-agent/rulesets/26794111` with `gh api --input <payload.json>`.
+Read back the live ruleset and confirm the seven contexts, integration IDs,
+strict policy and protections after applying it. Do not run the entire setup
+script merely to update protection: it also changes labels, milestones and
+repository merge settings. The script no longer provisions legacy branch
+protection alongside the ruleset. Repository plan limitations or API failures
+must be resolved explicitly; a skipped protection step is not successful setup.
