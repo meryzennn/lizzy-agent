@@ -3,7 +3,7 @@
 > **Goal:** Repo hidup, CLI kosong jalan, harness test dan mock provider siap.
 > **Architecture:** Bun-only dengan entry CLI ringan, JSONC + zod yang dimuat malas, serta akses OS terpusat di `src/platform/`. Harness HTTP lokal dan pengukuran performa dipakai ulang oleh fase berikutnya. Dua spike menghasilkan bukti sebelum pemilihan renderer dan batas binary.
 > **Tech stack:** TypeScript strict, Bun, zod; Biome dan TypeScript sebagai tooling development.
-> **Plan:** `docs/PLAN.html` bagian R/C/Fase 0; `docs/PLAN.md:420`; ADR-001 sampai ADR-006.
+> **Plan:** `docs/PLAN.html` bagian R/C/Fase 0; `docs/PLAN.md:420`; ADR-001 sampai ADR-007.
 > **Langkah lengkap:** [Fase 00 Foundation Implementation Plan](../superpowers/plans/2026-11-08-fase-00-foundation.md). File ini adalah spec dan manifest task untuk `sync-issues`; kode serta siklus test/implementasi/commit berada di rencana tersebut, sehingga tidak disalin dua kali.
 
 ## Hasil pembacaan repository, 8 November 2026
@@ -33,6 +33,8 @@ Urutan: ADR → prinsip C → spec fase → issue. `PLAN.md` menyatakan HTML men
 | Tidak ada nama config/path final atau versi Bun terkunci | Proposal Fase 0: executable `agent`, package privat `lizzy-agent`, config `~/.lizzy/config.jsonc` dan `<cwd>/.lizzy/config.jsonc`, Bun `1.4.2` dipin. Ini pilihan implementasi, bukan fakta dari roadmap. |
 
 Rencana ini tidak mengubah ADR atau teks roadmap lama. Pembaruan ADR hasil spike dibuat sebagai keluaran task dan direview sebelum menjadi keputusan final.
+
+Amendment, 9 November 2026: [ADR-007](../adr/007-paired-ci-reference.md) records the user-authorized CI-only paired reference policy for T09. It partially replaces ADR-006 reference selection; the dated repository snapshot and original roadmap remain historical. The separate policy docs PR is a prerequisite to native CI activation, not T09 completion; implementation and local verification may proceed before it merges.
 
 ### Peta sistem dan urutan setelah Fase 0
 
@@ -67,8 +69,8 @@ Perintah di bawah adalah acceptance yang akan dijalankan saat implementasi; belu
 - [ ] `rtk bun test test/mock-provider.test.ts` membuktikan kedua protokol, JSON dan SSE, semua request hanya ke loopback.
 - [ ] Spike boot memiliki data native Linux/Windows/macOS dengan versi Bun, arsitektur, runner, metode, dan raw samples.
 - [ ] Spike renderer memiliki dua prototipe; kedua entry source final dan kedua executable compiled dijalankan native Windows/Linux dengan workload input/stream/resize/Escape/Ctrl+C yang sama. Ukuran, latensi, exit dan restore dicatat terpisah per mode; ADR-003 menyimpan keputusan berdasarkan hasil.
-- [ ] `docs/perf/baseline.json` berisi angka terukur, ADR-006 menjelaskan target binary dan lingkungan pembanding, bukan angka tebakan.
-- [ ] `rtk bun run perf` hijau terhadap baseline key/OS/arch/Bun/workload yang sesuai; key lokal menghash host + hardware tanpa hostname mentah, key CI memuat label runner + hash kelas hardware. Mismatch ditolak; input regresi >20% membuat pemeriksa dan job CI merah.
+- [ ] Historical `docs/perf/baseline.json` contains measured data and is preserved; ADR-007 and `docs/perf/ci-reference.json` define the immutable CI reference and fixed binary caps.
+- [ ] Local `rtk bun run perf` passes against a matching frozen baseline; CI separately measures T08 and candidate sequentially in the same native job with exact key/Bun/workload equality. Mismatches fail; >20% or independent cap violations fail. Native Linux and Windows retain deliberate regression failure and clean comparison evidence.
 - [ ] CI `check (ubuntu-latest)`, `check (windows-latest)`, `perf (ubuntu-latest)`, dan `perf (windows-latest)` berjalan. User memverifikasi keempat nama pada proteksi branch setelah meninjau setup.
 - [ ] `rtk bun scripts/sync-issues.ts docs/phases/fase-00.md --dry-run` membaca sepuluh task tanpa memanggil GitHub.
 
@@ -270,6 +272,8 @@ Perintah di bawah adalah acceptance yang akan dijalankan saat implementasi; belu
 - [ ] The RSS measurement belongs to the child process after configuration and shell initialization, not to the measurement process.
 - [ ] Mismatched local hosts, CPU models, core counts, RAM, runner classes, OS, architecture, Bun versions, or workloads are rejected; legacy keys without fingerprints are also rejected. Baseline fallbacks or missing baselines cannot make CI pass.
 
+ADR-007 keeps this comparator contract. CI supplies one genuine same-job reference measurement plus the fixed cap; local checks continue to require the matching historical entry.
+
 ## Task F00-T09 — Approve measured baselines and require performance CI
 
 <a id="task-f00-t09--baseline-disetujui-dan-job-perf-wajib"></a>
@@ -278,21 +282,26 @@ Perintah di bawah adalah acceptance yang akan dijalankan saat implementasi; belu
 - **Labels:** os:windows, spec-change
 - **Bergantung pada:** F00-T03, F00-T07, F00-T08
 - **Files:**
-  - Create: `docs/perf/baseline.json`, `scripts/assemble-baseline.ts`
-  - Modify: `test/perf.test.ts`, `docs/adr/006-gerbang-performa.md`, `docs/perf/measurement.md`, `.github/workflows/ci.yml`, `scripts/setup-github.sh`, `docs/WORKFLOW.md`
+  - Create: `docs/perf/baseline.json`, `scripts/assemble-baseline.ts` (historical records), `scripts/perf-ci.ts`, `test/perf-ci.test.ts`
+  - Consume: reviewed-base `docs/perf/ci-reference.json`, `docs/adr/007-paired-ci-reference.md` from the separate documentation prerequisite
+  - Modify: `test/perf.test.ts`, `docs/perf/measurement.md`, `.github/workflows/ci.yml`, `scripts/setup-github.sh`, `docs/WORKFLOW.md`; preserve existing baseline samples and evidence
 
 ### Langkah
 
-- [ ] Ikuti [Task 9](../superpowers/plans/2026-11-08-fase-00-foundation.md#task-9-f00-t09--baseline-dan-ci-perf) untuk mengumpulkan angka aktual, review baseline, job perf dan bukti injeksi regresi.
+- [ ] Follow the active ADR-007 amendment in [Task 9](../superpowers/plans/2026-11-08-fase-00-foundation.md#task-9-f00-t09--baseline-dan-ci-perf): preserve historical baselines, load reviewed-base policy, build separate reference/candidate artifacts and prove the native paired gate. The old CI examples are historical, not implementation instructions.
 
 ### Verifikasi
 
-`rtk bun run perf` → exit 0 pada lingkungan matching; workflow pada perubahan regresi uji >20% → job perf exit nonzero.
+Local `rtk bun run perf` → exit 0 with a matching historical baseline. `rtk bun test test/perf.test.ts test/perf-ci.test.ts` and `rtk bun run check` → pass. Native Linux/Windows paired jobs must retain a deliberate >20% failure and a clean comparison under the same policy; local feasibility alone is insufficient.
 
 ### Selesai bila
 
 - [ ] Baselines contain actual hello/agent measurements from all three operating systems, with matching keys and Bun versions per OS/runner class; local entries use the measurement machine's fingerprint. Baseline changes receive a `spec-change` review.
-- [ ] Linux and Windows check and performance jobs run without skipping missing baseline input.
+- [ ] Linux and Windows CI load policy from exact event `pull_request.base.sha` or, for pushes to `main`, event `before` in base repository `meryzennn/lizzy-agent`; missing/zero/unavailable revisions fail. Measurement/comparison code comes from immutable T08 `61d868f200f4c9e99a54388603ef0c6098a255c1`; candidate policy edits cannot choose the reference or caps.
+- [ ] Both revisions build separately with frozen installs and Bun 1.4.2 before sequential measurement in the same native job, with separate empty profiles/cwds and workload `agent-f00-v1`. Full hardware key, Bun and workload match exactly; unknown historical hardware passes only with a genuine matched pair.
+- [ ] Missing policy/reference/caps, fetch/build/probe failures, incomplete samples and mismatches fail. More than 20% in any metric or the independent fixed cap (Linux x64 97784794 bytes; Windows x64 103514727 bytes) fails, without fallback, sample dropping, normalization, favorable reruns, automatic reference advancement or threshold relaxation.
+- [ ] Both completed raw sample sets, source/policy/harness revisions, build/dependency/binary hashes, environment and failure details are retained. Evidence starts before fallible setup and retains stage/role/outcome and available diagnostics on early failure; mid-probe samples unavailable from pinned `measure()` are reported as absent. Deliberate regression failure and clean native Linux/Windows comparison evidence are recorded; local feasibility is not completion.
+- [ ] Historical `baseline.json` and local `bun run perf` remain intact; paired CI replaces unknown-hardware coverage collection. Tests cover distinct artifacts, candidate policy/harness edits, profile isolation, boundary/cap failures and failure evidence without weakening existing tests.
 - [ ] Job names in `CHECKS` match CI; the user applies branch-protection changes.
 
 ## Task F00-T10 — Document usage and phase completion evidence

@@ -5,6 +5,23 @@ It does not initialize the agent, configuration, shell, provider, or TUI.
 The approved `baseline.json`, absolute binary target, and permanent >20%
 regression gate belong to F00-T08/T09; no baseline or target is set here.
 
+## Paired CI reproduction contract (ADR-007, 9 November 2026)
+
+The opening description, hello-runtime method and 8 November evidence below are historical T02 records. [ADR-007](../adr/007-paired-ci-reference.md) now records the authorized CI policy; the T09 implementation and native validation remain pending. The policy file [ci-reference.json](ci-reference.json) contains no measurement samples and does not replace historical `baseline.json`.
+
+For local historical checks, use Bun 1.4.2, `bun install --frozen-lockfile`, `bun run build`, then `bun run perf` (or `bun run perf <measurement-file.json>`). This requires the reviewed historical baseline with an exact machine/Bun/workload match and fails if it is absent. Main at T08 has no baseline file yet; this documentation PR does not create one. A local run is not paired CI acceptance.
+
+To reproduce paired CI once T09 implements it:
+
+1. Initialize stage/outcome evidence before fallible setup, outside both build directories. Record the reviewed policy revision and file hash: exact event `pull_request.base.sha` from base repository `meryzennn/lizzy-agent` for PRs, or event `before` (previous `main`) for pushes to `main`. Reject missing, zero, malformed or unavailable revisions/policy; never use the pushed candidate revision or a fallback. Fetch reference `61d868f200f4c9e99a54388603ef0c6098a255c1` and the exact candidate into separate directories, verify full SHAs and retain event, head, base and measured checkout/merge SHAs.
+2. On each native Linux x64 / Windows x64 runner, select Bun 1.4.2 from trusted policy and verify the executing Bun and each checkout's Bun pin before its frozen install and native build. Record exact argv, build-input and dependency/lockfile hashes and both binary hashes. Build both before measuring either; no cross-compilation or separately scheduled reference job can substitute.
+3. Load the measurement/comparison modules and their dependencies from the reference. Run its binary first and the candidate second with distinct absolute paths, separate empty runtime cwds/profiles and equivalent environments. Validate no personal/project config leaks in. Retain three startup warmups, all 15 `--version` samples and five initialized child-RSS samples after 200 ms, using workload `agent-f00-v1`.
+4. Require complete hardware-key/Bun/workload equality and agreement with policy. Give the pinned comparator one temporary reference entry with the fixed agent cap: 97784794 bytes on Linux x64 or 103514727 on Windows x64. Reject >20% in any metric or an independent cap violation; unknown historical hardware is allowed only with a matched pair. Never rewrite `baseline.json`, calculate a new cap or fall back to historical coverage collection.
+5. Retain completed raw measurements for both sides, all source/policy/harness revisions, environment/image/isolation metadata, hashes, comparison output and available failure details. Early setup/fetch/install/build failures retain stage/role/outcome evidence and Actions logs; preserve a completed reference result if the candidate fails. Pinned `measure()` exposes no partial sample arrays on a mid-probe exception: record the error and unavailable samples honestly. Preserve the nonzero exit and unconditional upload of available evidence. Do not drop samples, normalize identities or rerun unchanged failures until green.
+6. Link a deliberately failing regression run and a clean native comparison for **each** OS under the unchanged policy. Mark synthetic injections as workflow/comparator tests, not measured native regressions. T09 must add the actual entrypoint command and run/artifact URLs here when implemented; this prerequisite does not claim that command or evidence exists.
+
+The 9 November local Windows feasibility probe compared the pinned T08 reference with candidate `e022b6f115c5c0024b3de1842694322e12320ed0` and found no comparator failures. Its original local `proposal.md`, `probe.ts` and `result.json` are preserved in `C:/Users/RYZEN/.local/share/lizzy-agent/reports/f00-t09-reference-pair-2026-11-09/`. It used a shared empty cwd, so it proves neither separate-profile isolation nor native Linux/Windows CI. See [ADR-007](../adr/007-paired-ci-reference.md#konsekuensi) for the observed medians and remaining limits.
+
 ## Method and reproduction
 
 Use the repository's pinned Bun **1.4.2**, run `bun install --frozen-lockfile`,

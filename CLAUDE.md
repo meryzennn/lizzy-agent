@@ -22,6 +22,7 @@ Kalau sumber-sumber ini bertabrakan, urutannya: ADR > prinsip C di PLAN > fase M
 - **ADR-004** Tool bash memakai Git Bash di Windows.
 - **ADR-005** Semua config JSONC + zod. Jangan menambah parser YAML/TOML.
 - **ADR-006** Gerbang performa sejak Fase 0: `--version`, idle RSS, ukuran binary vs `docs/perf/baseline.json`, regresi >20% = merah.
+- **ADR-007** CI-only paired reference selection: measure immutable T08 and candidate in the same native job, using reviewed-base `docs/perf/ci-reference.json` and the pinned reference harness. Exact identities, >20% and fixed caps still apply; local `bun run perf` retains ADR-006 historical mode. See `docs/adr/007-paired-ci-reference.md`.
 
 ## Alur kerja wajib
 
@@ -62,6 +63,8 @@ bun scripts/sync-issues.ts docs/phases/fase-NN.md --dry-run
 ```
 
 Skrip `check`, `build`, dan `perf` dibuat di Fase 0. Sebelum ada, jangan mengaku sudah menjalankannya.
+
+`bun run perf` is the local historical check, not proof of paired CI acceptance. T09 must retain a deliberate failure and a clean native Linux/Windows pair under ADR-007; missing policy/reference/caps or mismatched identities fail. Do not collect unknown-hardware rows or change policy to turn a failed CI comparison green.
 
 ## Aturan kode
 
