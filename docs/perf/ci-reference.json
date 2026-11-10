@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "repository": "meryzennn/lizzy-agent",
+  "referenceCommit": "61d868f200f4c9e99a54388603ef0c6098a255c1",
+  "bun": "1.4.2",
+  "workload": "agent-f00-v1",
+  "binaryLimitBytes": {
+    "linux-x64": 97784794,
+    "win32-x64": 103514727
+  }
+}

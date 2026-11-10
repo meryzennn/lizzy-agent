@@ -76,6 +76,10 @@ Tipe: `feat`, `fix`, `test`, `docs`, `perf`, `refactor`, `chore`, `ci`. Commit k
 - Review: kamu. Claude Code tidak pernah merge.
 - PR yang mengubah ADR, prinsip, atau baseline performa diberi label `spec-change` dan dijelaskan di body.
 
+For T09, [ADR-007](adr/007-paired-ci-reference.md) replaces CI historical reference lookup with a same-job native reference/candidate pair. Policy comes from [ci-reference.json](perf/ci-reference.json) at exact event `pull_request.base.sha`, or event `before` for pushes to `main`, in base repository `meryzennn/lizzy-agent`; missing/zero/unavailable revisions or policy fail without fallback. The immutable T08 harness enforces exact identities, >20% and fixed caps. Local `bun run perf` still checks historical `baseline.json`. The docs prerequisite has its own issue/PR and must be available on the real reviewed base before native CI activation; implementation/local tests may proceed before merge. Do not close #9 with the docs PR or treat local feasibility as CI validation. Keep project status In Progress until merge closes the issue.
+
+T09 must retain deliberate failure and clean comparison evidence on both native OSes. Required names remain `check (ubuntu-latest)`, `check (windows-latest)`, `perf (ubuntu-latest)` and `perf (windows-latest)`; only the user applies protection changes. Future policy or sampling changes require `spec-change` review, never automatic reference/cap updates or favorable reruns.
+
 ## 6. Label dan milestone
 
 Dibuat oleh `scripts/setup-github.sh`.

@@ -20,6 +20,7 @@ Write every GitHub issue/PR title, body, and authored discussion or comment in E
    Conventional Commits, baris terakhir `Refs #N`. Jangan mengubah apa pun di luar scope task.
 6. **Verifikasi lokal**: perintah verifikasi di spec + `bun run check` (+ `bun run perf` bila ada).
    Simpan ringkasan output untuk PR. Jangan mengaku lulus tanpa menjalankannya.
+   Local `bun run perf` requires a matching historical baseline. Under ADR-007, CI instead builds and measures the pinned reference and candidate in the same native job using reviewed-base policy; T09 requires deliberate failure and clean Linux/Windows comparison evidence. Do not substitute unknown-hardware collection or a local run for that evidence.
 7. **PR**: `git push -u origin <branch>`, lalu
    `gh pr create --title "<type>(fNN): <English summary> [FNN-TMM]" --body-file <file>` dengan isi template PR
    dan `Closes #N`; label `phase:FNN` + type.

@@ -14,6 +14,7 @@ Write every GitHub issue/PR title, body, and authored discussion or comment in E
    `docs/PLAN.md`. Catat perintah dan ringkasan output tiap kriteria. Yang tidak bisa dibuktikan otomatis
    (mis. uji manual Windows, Discord asli) ditulis sebagai checklist manual untuk user, bukan ditandai lulus.
 4. Jalankan `bun run check` dan `bun run perf`; bandingkan dengan `docs/perf/baseline.json`.
+   This is the local historical check. Also verify the native paired CI evidence required by ADR-007: trusted-base policy, pinned reference harness, exact identities, fixed caps, deliberate regression failure and clean Linux/Windows comparisons. Missing evidence leaves the phase gate incomplete.
 5. Bila fase ini menyentuh prompt, tool, atau loop agent: jalankan eval harness (setelah Fase 2 tersedia)
    dan bandingkan dengan hasil terakhir di `docs/evals/`.
 6. Tulis hasilnya di bagian "Laporan gerbang" `docs/phases/fase-NN.md` (dan file hasil eval bila ada).
