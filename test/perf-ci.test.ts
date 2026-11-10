@@ -580,6 +580,7 @@ test("workflow retains checkout/setup failures and uploads evidence unconditiona
     "utf8",
   ).replaceAll("\r\n", "\n");
   const perf = workflow.slice(workflow.indexOf("\n  perf:"));
+  expect(perf.split("\n    steps:")[0]).not.toMatch(/\$\{\{\s*runner\./);
   expect(perf.indexOf("Initialize performance evidence")).toBeLessThan(
     perf.indexOf("actions/checkout@"),
   );
