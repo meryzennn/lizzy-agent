@@ -57,6 +57,8 @@ jobs:
 
   perf:
     name: perf (${{ matrix.os }})
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -64,80 +66,53 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       LIZZY_PERF_RUNNER: ${{ matrix.os }}
+      LIZZY_PERF_EVIDENCE: ${{ runner.temp }}/lizzy-paired-perf-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version-file: .bun-version
-      - run: bun install --frozen-lockfile
-      - run: bun run build
-      - name: Measure initialized skeleton and enforce performance gate
-        shell: bun {0}
+      - name: Initialize performance evidence
+        id: evidence
+        shell: pwsh
         run: |
-          import { createHash } from "node:crypto";
-          import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-          import { cpus, release, tmpdir, totalmem } from "node:os";
-          import { join, resolve } from "node:path";
-          import { pathToFileURL } from "node:url";
-          const repository = process.cwd();
-          const resultPath = resolve(repository, "dist/perf-result.json");
-          mkdirSync(resolve(repository, "dist"), { recursive: true });
-          const report = {};
-          try {
-            const { measure } = await import(pathToFileURL(resolve(repository, "scripts/measure-perf.ts")).href);
-            const { baselineSchema, checkPerformance } = await import(pathToFileURL(resolve(repository, "scripts/perf.ts")).href);
-            const { run } = await import(pathToFileURL(resolve(repository, "src/platform/process.ts")).href);
-            const binary = resolve(repository, "dist", process.platform === "win32" ? "agent.exe" : "agent");
-            report.environment = {
-              runner: process.env.LIZZY_PERF_RUNNER, bun: Bun.version,
-              os: process.platform, arch: process.arch, osRelease: release(),
-              cpuModels: cpus().map(cpu => cpu.model.trim()).sort(), memoryBytes: totalmem(),
-              image: process.env.ImageOS, imageVersion: process.env.ImageVersion,
-              commit: run(["git", "rev-parse", "HEAD"]).trim(), eventCommit: process.env.GITHUB_SHA,
-              buildCommand: [process.execPath, "run", "build"],
-              binarySha256: createHash("sha256").update(readFileSync(binary)).digest("hex"),
-              buildInputSha256: Object.fromEntries(run(["git", "ls-files", "src", "scripts/build.ts", "spikes/boot.ts", "package.json", "bun.lock", ".bun-version", "tsconfig.json"]).trim().split(/\r?\n/).map(file => [file, createHash("sha256").update(readFileSync(resolve(repository, file))).digest("hex")])),
-              dependencies: JSON.parse(readFileSync(resolve(repository, "package.json"), "utf8")).dependencies,
-              installedZod: JSON.parse(readFileSync(resolve(repository, "node_modules/zod/package.json"), "utf8")).version,
-              configuration: "Isolated empty home and working directory; native shell resolution."
-            };
-            const profile = mkdtempSync(join(tmpdir(), "lizzy-perf-"));
-            process.env.HOME = profile;
-            process.env.USERPROFILE = profile;
-            process.chdir(profile);
-            const current = measure([binary], binary, "agent-f00-v1", process.env.LIZZY_PERF_RUNNER);
-            report.current = current;
-            const baseline = baselineSchema.parse(JSON.parse(readFileSync(resolve(repository, "docs/perf/baseline.json"), "utf8")));
-            if (!baseline.entries.some(entry => entry.key === current.key && entry.bun === current.bun && entry.workload === current.workload)) {
-              const helloBinary = resolve(repository, "dist", process.platform === "win32" ? "hello.exe" : "hello");
-              const helloBuildCommand = [process.execPath, "build", "--compile", "spikes/boot.ts", "--outfile", helloBinary];
-              process.chdir(repository);
-              run(helloBuildCommand, process.env, 120_000);
-              process.chdir(profile);
-              const hello = measure([helloBinary], helloBinary, "hello-v1", process.env.LIZZY_PERF_RUNNER);
-              if (hello.key !== current.key || hello.bun !== current.bun) throw new Error("Candidate hello/agent identities differ; retain the failure and collect a genuine matching pair.");
-              const candidate = {
-                status: "unapproved", hello, agent: current,
-                environment: { ...report.environment, key: current.key, helloBuildCommand, helloBinarySha256: createHash("sha256").update(readFileSync(helloBinary)).digest("hex") }
-              };
-              writeFileSync(resolve(repository, "dist/perf-candidate.json"), JSON.stringify(candidate, null, 2) + "\n");
-            }
-            const failures = checkPerformance(baseline, current);
-            report.failures = failures;
-            for (const failure of failures) console.error(failure);
-            process.exitCode = failures.length ? 1 : 0;
-          } catch (error) {
-            report.error = error instanceof Error ? error.message : String(error);
-            console.error(`Performance gate failed: ${report.error}`);
-            process.exitCode = 1;
-          } finally {
-            writeFileSync(resultPath, JSON.stringify(report, null, 2) + "\n");
-          }
+          New-Item -ItemType Directory -Force -Path $env:LIZZY_PERF_EVIDENCE | Out-Null
+          @{ stage = 'workflow-start'; outcome = 'started'; run = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" } | ConvertTo-Json | Set-Content -Encoding utf8 (Join-Path $env:LIZZY_PERF_EVIDENCE 'workflow-result.json')
+      - uses: actions/checkout@v4
+        id: checkout
+        with:
+          path: candidate
+      - uses: actions/setup-node@v4
+        id: node
+        with:
+          node-version: '24'
+      - name: Read trusted policy and fetch immutable reference
+        id: policy
+        working-directory: candidate
+        run: node --experimental-strip-types scripts/perf-ci.ts prepare
+      - uses: oven-sh/setup-bun@v2
+        id: bun
+        with:
+          bun-version: ${{ steps.policy.outputs.bun-version }}
+      - name: Build and measure the native pair
+        id: pair
+        working-directory: candidate
+        run: bun scripts/perf-ci.ts measure
+      - name: Retain workflow setup outcomes
+        if: always()
+        shell: pwsh
+        env:
+          STEP_OUTCOMES: ${{ toJSON(steps) }}
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:LIZZY_PERF_EVIDENCE | Out-Null
+          @{
+            stage = 'workflow-outcomes'
+            steps = ($env:STEP_OUTCOMES | ConvertFrom-Json)
+            runner = $env:RUNNER_OS
+            arch = $env:RUNNER_ARCH
+            image = $env:ImageOS
+            imageVersion = $env:ImageVersion
+            diagnostics = "Actions logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          } | ConvertTo-Json -Depth 20 | Set-Content -Encoding utf8 (Join-Path $env:LIZZY_PERF_EVIDENCE 'workflow-result.json')
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: perf-${{ matrix.os }}
-          path: |
-            dist/perf-result.json
-            dist/perf-candidate.json
+          path: ${{ env.LIZZY_PERF_EVIDENCE }}/*result.json
           if-no-files-found: error
